@@ -345,6 +345,83 @@ print_manual_config_guide() {
 }
 
 # -----------------------------------------------------------------------------
+# 步骤 6: 重启网关
+# -----------------------------------------------------------------------------
+
+restart_gateway() {
+    print_step 6 "重启 OpenClaw 网关"
+
+    # 检测可用的重启方式
+    local has_openclaw=false
+    local has_systemctl=false
+
+    if command -v openclaw &> /dev/null; then
+        has_openclaw=true
+    fi
+    if command -v systemctl &> /dev/null; then
+        has_systemctl=true
+    fi
+
+    if ! prompt_yes_no "是否现在重启 OpenClaw 网关?" "y"; then
+        echo -e "\n  ${INFO} 已跳过重启，请稍后手动执行以下任一命令:"
+        echo ""
+        if [ "$has_openclaw" = true ]; then
+            echo -e "  ${CYAN}openclaw gateway restart${NC}"
+        else
+            echo -e "  ${DIM}# 如果安装了 openclaw CLI:${NC}"
+            echo -e "  ${CYAN}openclaw gateway restart${NC}"
+        fi
+        echo ""
+        if [ "$has_systemctl" = true ]; then
+            echo -e "  ${DIM}# 或者通过 systemctl:${NC}"
+            echo -e "  ${CYAN}systemctl --user restart openclaw-gateway${NC}"
+        else
+            echo -e "  ${DIM}# 或者通过 systemctl:${NC}"
+            echo -e "  ${CYAN}systemctl --user restart openclaw-gateway${NC}"
+        fi
+        echo ""
+        SKIP_RESTART=true
+        return
+    fi
+
+    SKIP_RESTART=false
+
+    # 尝试重启
+    if [ "$has_openclaw" = true ]; then
+        echo -e "  正在通过 openclaw CLI 重启网关..."
+        if openclaw gateway restart 2>&1 | while read -r line; do
+            echo -e "  ${DIM}${line}${NC}"
+        done; then
+            echo -e "  $CHECK 网关已重启"
+            return
+        else
+            echo -e "  $WARN openclaw CLI 重启失败，尝试 systemctl..."
+        fi
+    fi
+
+    if [ "$has_systemctl" = true ]; then
+        echo -e "  正在通过 systemctl 重启网关..."
+        if systemctl --user restart openclaw-gateway 2>&1 | while read -r line; do
+            echo -e "  ${DIM}${line}${NC}"
+        done; then
+            echo -e "  $CHECK 网关已重启"
+            return
+        else
+            echo -e "  $WARN systemctl 重启失败"
+        fi
+    fi
+
+    if [ "$has_openclaw" = false ] && [ "$has_systemctl" = false ]; then
+        echo -e "  $WARN 未检测到 openclaw CLI 或 systemctl"
+        echo -e "  ${INFO} 请手动重启 OpenClaw 网关:"
+        echo -e "  ${CYAN}openclaw gateway restart${NC}"
+        echo -e "  ${DIM}# 或${NC}"
+        echo -e "  ${CYAN}systemctl --user restart openclaw-gateway${NC}"
+        SKIP_RESTART=true
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # 完成提示
 # -----------------------------------------------------------------------------
 
@@ -360,14 +437,19 @@ print_success() {
     echo ""
     echo -e "  ${BOLD}下一步:${NC}"
 
+    local step=1
+
     if [ "$SKIP_CONFIG" = true ]; then
-        echo -e "  1. 按上方提示编辑 ${CYAN}${CONFIG_FILE}${NC} 添加配置"
-        echo -e "  2. 重启 OpenClaw 服务"
-        echo -e "  3. 发送一条语音消息测试"
-    else
-        echo -e "  1. 重启 OpenClaw 服务"
-        echo -e "  2. 发送一条语音消息测试"
+        echo -e "  ${step}. 按上方提示编辑 ${CYAN}${CONFIG_FILE}${NC} 添加配置"
+        step=$((step + 1))
     fi
+
+    if [ "${SKIP_RESTART:-false}" = true ]; then
+        echo -e "  ${step}. 按上方提示重启 OpenClaw 网关"
+        step=$((step + 1))
+    fi
+
+    echo -e "  ${step}. 发送一条语音消息测试"
     echo ""
 }
 
@@ -375,7 +457,7 @@ print_success() {
 # 主流程
 # -----------------------------------------------------------------------------
 
-TOTAL_STEPS=5
+TOTAL_STEPS=6
 
 main() {
     print_banner
@@ -384,6 +466,7 @@ main() {
     collect_config
     install_skill
     write_config
+    restart_gateway
     print_success
 }
 
