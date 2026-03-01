@@ -9,12 +9,18 @@ metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
 ## Overview
 
 使用火山引擎 Seed-ASR 2.0 Standard（豆包录音文件识别模型2.0-标准版）来识别各平台发送的语音消息。通过 `beforeMessageProcessed` 钩子拦截语音，转写后伪装成普通文本消息，对下游大模型完全透明。支持所有平台（飞书、Telegram、钉钉等），无平台限制。
+## Quick Install / Update
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/gray0128/volcengine-asr/main/install.sh | bash
+```
+
+首次运行为安装，已安装时自动检测并提供更新选项。
 ## Quick Start
 
 ### 1. 配置环境变量
 
-在 `.env` 文件中配置（JSON 格式）：
+在 `~/.openclaw/openclaw.json` 中配置（插件启动时自动加载）：
 
 ```json
 {
@@ -86,9 +92,13 @@ OpenClaw 大模型处理
 | `S3_REGION` | ❌ | S3 区域，默认 `auto` |
 | `S3_PUBLIC_URL` | ❌ | S3 自定义公开域名，不设置则使用预签名 URL |
 
-### 配置方法
+### 配置加载优先级
 
-在 `.env` 文件中配置（JSON 格式），参考 `.env.example`。
+插件启动时按以下顺序加载配置（已有的系统环境变量不会被覆盖）：
+
+1. 系统环境变量 (`process.env`)
+2. `~/.openclaw/openclaw.json` → `skills.entries.volcengine-asr.env`
+3. 项目目录下的 `.env` 文件
 
 ## Resources
 
@@ -118,7 +128,7 @@ context.message.type = "text";
 
 | 错误 | 原因 | 解决方案 |
 |------|------|----------|
-| 未配置 API Key | `VOLC_API_KEY` 未设置 | 检查 `.env` 中的 `VOLC_API_KEY` 配置 |
+| 未配置 API Key | `VOLC_API_KEY` 未设置 | 检查 `~/.openclaw/openclaw.json` 中的配置 |
 | S3 配置不完整 | S3 环境变量未设置 | 检查 `S3_ENDPOINT`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` |
 | 音频格式不支持 | 平台语音格式问题 | 安装 ffmpeg 转码，见 [references/audio-formats.md](references/audio-formats.md) |
 | API 调用失败 | 火山引擎鉴权问题 | 检查 API Key 权限和余额 |

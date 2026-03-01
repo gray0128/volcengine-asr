@@ -2,7 +2,7 @@
 
 基于火山引擎 Seed-ASR 2.0（豆包大模型录音文件识别标准版）的 OpenClaw 语音识别插件。
 
-自动拦截各平台（飞书、Telegram、钉钉等）的语音消息，转写为文本后注入上下文，对下游大模型完全透明。
+自动拦截各平台（飞书、Telegram、钉钉等）的语音消息，转写为文本后注入上下文，对下游大模型完全透明。支持所有 S3 兼容存储（Cloudflare R2、AWS S3、MinIO 等）。
 
 ## 工作流程
 
@@ -31,13 +31,14 @@ Skill 拦截 (beforeMessageProcessed)
 
 推荐参数：16000 Hz 采样率，单声道，16 bit，音频时长 ≤ 60s。
 
-## 一键安装
+## 安装 / 更新
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/gray0128/volcengine-asr/main/install.sh | bash
 ```
 
-安装脚本会自动引导你完成配置，也可选择跳过配置，安装后手动添加。
+- **首次安装**：自动引导配置火山引擎 API Key 和 S3 存储参数，也可跳过后手动添加
+- **更新**：检测到已安装时自动执行 `git pull` + `npm install`，可选重启网关
 
 ## 手动安装
 
@@ -52,7 +53,7 @@ npm install
 
 ### 2. 配置环境变量
 
-复制 `.env.example` 为 `.env`，填入真实配置：
+在 `~/.openclaw/openclaw.json` 中添加 skill 配置（插件启动时会自动从该文件加载）：
 
 ```json
 {
@@ -89,7 +90,7 @@ npm install
 
 ## 本地测试
 
-项目自带测试脚本 `test.js`，可使用项目中的 OGG 音频文件走完 **R2 上传 → 火山引擎 ASR 识别** 的完整流程，无需部署到 OpenClaw 即可验证配置是否正确。
+项目自带测试脚本 `test.js`，可使用项目中的 OGG 音频文件走完 **S3 上传 → 火山引擎 ASR 识别** 的完整流程，无需部署到 OpenClaw 即可验证配置是否正确。
 
 ### 用法
 
@@ -109,7 +110,7 @@ node test.js all
 1. **加载配置** - 从 `.env` 文件读取环境变量（火山引擎 API Key、S3 存储凭证等）
 2. **读取音频** - 读取指定的本地 OGG 文件
 3. **推断格式** - 根据文件扩展名自动推断音频编码参数（format、codec 等）
-4. **上传 R2** - 将音频文件上传到 S3 兼容存储，获取临时预签名 URL
+4. **上传 S3** - 将音频文件上传到 S3 兼容存储，获取临时预签名 URL
 5. **提交 ASR** - 调用火山引擎 Seed-ASR 2.0 API 提交识别任务
 6. **轮询结果** - 周期性查询任务状态，直到识别完成
 7. **输出结果** - 打印识别文本、上传耗时和识别耗时，多文件时输出汇总
@@ -130,6 +131,7 @@ node test.js all
 ├── references/
 │   ├── audio-formats.md      # 音频格式参考
 │   └── api-reference.md      # API 接口参考
+├── install.sh                 # 一键安装/更新脚本
 ├── .env.example              # 环境变量模板
 ├── SKILL.md                  # OpenClaw Skill 元数据
 └── SYSTEMD_SETUP.txt         # systemd 部署指南
