@@ -58,15 +58,15 @@ prompt_input() {
     local is_secret="${4:-false}"
 
     if [ -n "$default" ]; then
-        echo -ne "  ${prompt} ${DIM}(默认: ${default})${NC}: " >&2
+        echo -ne "  ${prompt} ${DIM}(默认: ${default})${NC}: " 
     else
-        echo -ne "  ${prompt}: " >&2
+        echo -ne "  ${prompt}: " 
     fi
 
     local input_value=""
     if [ "$is_secret" = "true" ]; then
         read -rs input_value <&3 || true
-        echo "" >&2
+        echo "" 
     else
         read -r input_value <&3 || true
     fi
@@ -83,9 +83,9 @@ prompt_yes_no() {
     local default="${2:-y}"
 
     if [ "$default" = "y" ]; then
-        echo -ne "  ${prompt} ${DIM}[Y/n]${NC}: " >&2
+        echo -ne "  ${prompt} ${DIM}[Y/n]${NC}: " 
     else
-        echo -ne "  ${prompt} ${DIM}[y/N]${NC}: " >&2
+        echo -ne "  ${prompt} ${DIM}[y/N]${NC}: " 
     fi
 
     local answer=""
