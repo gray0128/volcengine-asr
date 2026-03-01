@@ -43,6 +43,8 @@
    *(注：插件仍旧向下兼容读取 `skills.entries.volcengine-asr.env` 作为配置。)*
 4. 重启 OpenClaw Gateway。
 
+> **安装失败排查：** 如果您遇到了 Config Invalid 或者 package.json 等注册校验错误，请查阅 [常见问题与排查指南](./TROUBLESHOOTING.md)。
+
 ## 3. Agent 工作流 (How it affects you)
 
 当用户对你发送语音时：
