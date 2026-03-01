@@ -87,10 +87,42 @@ npm install
 | `S3_REGION` | 否 | S3 区域，默认 `auto` |
 | `S3_PUBLIC_URL` | 否 | S3 自定义公开域名，不设置则使用预签名 URL |
 
+## 本地测试
+
+项目自带测试脚本 `test.js`，可使用项目中的 OGG 音频文件走完 **R2 上传 → 火山引擎 ASR 识别** 的完整流程，无需部署到 OpenClaw 即可验证配置是否正确。
+
+### 用法
+
+```bash
+# 默认测试 test-audio.ogg
+node test.js
+
+# 指定测试文件
+node test.js test-keshan.ogg
+
+# 测试项目目录下所有 OGG 文件
+node test.js all
+```
+
+### 测试流程
+
+1. **加载配置** - 从 `.env` 文件读取环境变量（火山引擎 API Key、S3 存储凭证等）
+2. **读取音频** - 读取指定的本地 OGG 文件
+3. **推断格式** - 根据文件扩展名自动推断音频编码参数（format、codec 等）
+4. **上传 R2** - 将音频文件上传到 S3 兼容存储，获取临时预签名 URL
+5. **提交 ASR** - 调用火山引擎 Seed-ASR 2.0 API 提交识别任务
+6. **轮询结果** - 周期性查询任务状态，直到识别完成
+7. **输出结果** - 打印识别文本、上传耗时和识别耗时，多文件时输出汇总
+
+测试通过即表示环境变量、S3 存储和火山引擎 API 配置均正确。
+
 ## 项目结构
 
 ```
 ├── index.js                  # Skill 主入口，beforeMessageProcessed 钩子
+├── test.js                   # 本地测试脚本
+├── test-audio.ogg            # 测试用音频文件
+├── test-keshan.ogg           # 测试用音频文件
 ├── scripts/
 │   ├── volcengine.js         # 火山引擎 Seed-ASR 2.0 API 封装
 │   ├── s3-client.js          # S3 兼容对象存储客户端
