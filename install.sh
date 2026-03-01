@@ -341,8 +341,8 @@ write_config() {
 
     env_json+="}"
 
-    # 构建 skill 配置片段
-    local plugin_json="{\"enabled\":true,\"env\":${env_json}}"
+    # 构建 plugin 配置片段
+    local plugin_json="{\"enabled\":true,\"config\":${env_json}}"
 
     if [ -f "$CONFIG_FILE" ]; then
         echo -e "  ${INFO} 检测到已有配置文件: ${CONFIG_FILE}"
@@ -380,15 +380,15 @@ print_manual_config_guide() {
     echo -e "  编辑 OpenClaw 配置文件:"
     echo -e "  ${CYAN}${CONFIG_FILE}${NC}"
     echo ""
-    echo -e "  在配置文件中添加或合并以下内容到 ${BOLD}skills.entries${NC} 字段:"
+    echo -e "  在配置文件中添加或合并以下内容到 ${BOLD}plugins.entries${NC} 字段:"
     echo ""
     echo -e "  ${DIM}// ${CONFIG_FILE}${NC}"
     echo -e "  {"
-    echo -e "    \"skills\": {"
+    echo -e "    \"plugins\": {"
     echo -e "      \"entries\": {"
     echo -e "        ${YELLOW}\"volcengine-asr\": {${NC}"
     echo -e "          ${YELLOW}\"enabled\": true,${NC}"
-    echo -e "          ${YELLOW}\"env\": {${NC}"
+    echo -e "          ${YELLOW}\"config\": {${NC}"
     echo -e "            ${YELLOW}\"VOLC_API_KEY\": \"你的火山引擎API Key\",${NC}"
     echo -e "            ${YELLOW}\"S3_ENDPOINT\": \"你的S3端点URL\",${NC}"
     echo -e "            ${YELLOW}\"S3_ACCESS_KEY_ID\": \"你的S3 Access Key ID\",${NC}"
