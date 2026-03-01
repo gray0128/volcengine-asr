@@ -1,12 +1,46 @@
 /**
  * Volcengine ASR Skill for OpenClaw
- * 使用火山引擎 Seed-ASR 2.0 (大模型录音文件识别标准版) 识别飞书语音消息
+ * 使用火山引擎 Seed-ASR 2.0 (大模型录音文件识别标准版) 识别语音消息
  */
 
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
+const os = require('os');
 const { submitTask, waitForResult } = require('./scripts/volcengine');
 const { uploadWithAutoCleanup } = require('./scripts/s3-client');
+
+/**
+ * 从 openclaw.json 加载 skill 环境变量（不覆盖已有的系统环境变量）
+ */
+function loadSkillEnv() {
+  const configPaths = [
+    path.join(os.homedir(), '.openclaw', 'openclaw.json'),
+    path.join(__dirname, '.env'),
+  ];
+
+  for (const configPath of configPaths) {
+    try {
+      const raw = fsSync.readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(raw);
+      const skillEnv =
+        config?.skills?.entries?.['volcengine-asr']?.env;
+      if (skillEnv && typeof skillEnv === 'object') {
+        for (const [key, value] of Object.entries(skillEnv)) {
+          if (!process.env[key]) {
+            process.env[key] = value;
+          }
+        }
+        console.log(`[Volcengine-ASR] 已从 ${path.basename(configPath)} 加载配置`);
+        return;
+      }
+    } catch {
+      // 文件不存在或解析失败，尝试下一个
+    }
+  }
+}
+
+loadSkillEnv();
 
 function isConfigured() {
   return !!process.env.VOLC_API_KEY;
