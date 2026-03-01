@@ -1,6 +1,6 @@
 # 常见问题与排查指南 (Troubleshooting)
 
-> 版本: v1.1 | 更新时间: 2026-03-01 18:28:00
+> 版本: v1.2 | 更新时间: 2026-03-01 19:15:00
 
 本文档记录了基于 OpenClaw Plugin 架构开发和安装本插件（`volcengine-asr`）时，可能会遇到的由 CLI 验证机制引入的一些典型错误及其解决方案。
 
@@ -42,14 +42,29 @@
 ```
 
 **原因分析：**
-除了 `package.json`，OpenClaw 通过扩展机制加载核心 `openclaw.plugin.json` （Plugin Manifest）时，强制要求该文件必须拥有 `configSchema` 字段，且它必须是一个 **对象（Object）**，用于告诉主程序这个查件接受哪些配置。如果没有定义，哪怕这个插件根本没有自定义设置，OpenClaw 也会拒载。
+除了 `package.json`，OpenClaw 通过扩展机制加载核心 `openclaw.plugin.json` （Plugin Manifest）时，需要 `configSchema` 字段来严格规范该插件接受哪些配置。
+
+**进一步的陷阱（配置被丢弃）：**
+如果在 `configSchema` 中仅仅写了一个空对象（`"properties": {}`），虽然能绕过上述第一阶段的 `Config invalid` 报错，但当插件运行时，由于用户配置的大部分对应环境变量（如 `VOLC_API_KEY`、`S3_ENDPOINT` 等）没有在 Schema 中被显式声明，OpenClaw 安全机制会判定这些配置为“输入非法或冗余”并将其**直接丢弃/过滤**。最终会导致你的 `index.js` 在读取时显示 `未找到配置`。
 
 **解决方案：**
-在 `openclaw.plugin.json` 中补上一个空的 Object 结构适配其解析要求：
+在 `openclaw.plugin.json` 的 `configSchema` 中**完整定义**所有插件依赖的参数及其 `type` 和 `required` 属性，与 `install.sh` 中的安装引导严格对齐，例如：
 ```json
     "configSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {
+            "VOLC_API_KEY": {
+                "type": "string",
+                "description": "火山引擎 API Key"
+            },
+            ...
+        },
+        "required": [
+            "VOLC_API_KEY",
+            "S3_ENDPOINT",
+            "S3_ACCESS_KEY_ID",
+            "S3_SECRET_ACCESS_KEY"
+        ]
     }
 ```
 
@@ -191,3 +206,4 @@ OpenClaw 的插件加载器不使用默认导出（`export default` 或 `module.
 |------|------|----------|
 | v1.0 | 2026-03-01 09:50:00 | 初始文档，记录 manifest/configSchema/env 三类校验错误 |
 | v1.1 | 2026-03-01 18:28:00 | 新增第 4-6 条：extensions 指向错误、register 导出缺失、配置 Key 名称不匹配 |
+| v1.2 | 2026-03-01 19:15:00 | 完善 `configSchema` 因属性为空导致用户配置被过滤或丢弃的问题分析及修复方式 |
