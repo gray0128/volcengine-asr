@@ -48,6 +48,9 @@ print_step() {
     echo -e "${DIM}$(printf '%.0s─' {1..50})${NC}"
 }
 
+# 打开 /dev/tty 作为 fd 3，用于在 curl | bash 场景下读取用户输入
+exec 3</dev/tty 2>/dev/null || exec 3<&0
+
 prompt_input() {
     local prompt="$1"
     local var_name="$2"
@@ -55,16 +58,17 @@ prompt_input() {
     local is_secret="${4:-false}"
 
     if [ -n "$default" ]; then
-        echo -ne "  ${prompt} ${DIM}(默认: ${default})${NC}: "
+        echo -ne "  ${prompt} ${DIM}(默认: ${default})${NC}: " >&2
     else
-        echo -ne "  ${prompt}: "
+        echo -ne "  ${prompt}: " >&2
     fi
 
+    local input_value=""
     if [ "$is_secret" = "true" ]; then
-        read -rs input_value < /dev/tty
-        echo ""
+        read -rs input_value <&3 || true
+        echo "" >&2
     else
-        read -r input_value < /dev/tty
+        read -r input_value <&3 || true
     fi
 
     if [ -z "$input_value" ] && [ -n "$default" ]; then
@@ -79,12 +83,13 @@ prompt_yes_no() {
     local default="${2:-y}"
 
     if [ "$default" = "y" ]; then
-        echo -ne "  ${prompt} ${DIM}[Y/n]${NC}: "
+        echo -ne "  ${prompt} ${DIM}[Y/n]${NC}: " >&2
     else
-        echo -ne "  ${prompt} ${DIM}[y/N]${NC}: "
+        echo -ne "  ${prompt} ${DIM}[y/N]${NC}: " >&2
     fi
 
-    read -r answer < /dev/tty
+    local answer=""
+    read -r answer <&3 || true
     answer="${answer:-$default}"
 
     case "$answer" in
