@@ -223,10 +223,10 @@ collect_config() {
         echo -e "  ${WARN} S3_ACCESS_KEY_ID 为必填项"
         prompt_input "S3_ACCESS_KEY_ID" S3_ACCESS_KEY_ID
     done
-    prompt_input "S3_SECRET_ACCESS_KEY" S3_SECRET_ACCESS_KEY "" "true"
+    prompt_input "S3_SECRET_ACCESS_KEY" S3_SECRET_ACCESS_KEY
     while [ -z "${S3_SECRET_ACCESS_KEY:-}" ]; do
         echo -e "  ${WARN} S3_SECRET_ACCESS_KEY 为必填项"
-        prompt_input "S3_SECRET_ACCESS_KEY" S3_SECRET_ACCESS_KEY "" "true"
+        prompt_input "S3_SECRET_ACCESS_KEY" S3_SECRET_ACCESS_KEY
     done
     prompt_input "S3_BUCKET" S3_BUCKET "volcengine-asr"
     prompt_input "S3_REGION" S3_REGION "auto"
