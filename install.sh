@@ -232,7 +232,7 @@ collect_config() {
     done
     prompt_input "VOLC_RESOURCE_ID" VOLC_RESOURCE_ID "volc.seedasr.auc"
 
-    echo -e "\n  ${BOLD}-- Cloudflare R2 配置 --${NC}"
+    echo -e "\n  ${BOLD}-- S3 配置 --${NC}"
     prompt_input "S3_ENDPOINT" S3_ENDPOINT
     while [ -z "${S3_ENDPOINT:-}" ]; do
         echo -e "  ${WARN} S3_ENDPOINT 为必填项"
@@ -293,7 +293,7 @@ install_plugin() {
         echo -e "  正在注册 Plugin..."
         if command -v openclaw &> /dev/null; then
             openclaw plugins install "$PLUGIN_DIR" 2>&1 | while read -r line; do
-                echo -e "  \${DIM}\${line}\${NC}"
+                echo -e "  ${DIM}${line}${NC}"
             done
             echo -e "  $CHECK Plugin 注册完成"
         else
