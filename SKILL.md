@@ -1,0 +1,134 @@
+---
+name: doubao-asr
+description: 使用火山引擎 Seed-ASR 2.0（豆包录音文件识别模型）识别语音消息。在消息进入大模型前拦截语音并转写为文本，对下游透明。支持所有平台（飞书、Telegram、钉钉等）的语音消息处理。使用场景：语音转文字、中文语音识别。
+metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
+---
+
+# Doubao ASR Skill
+
+## Overview
+
+使用火山引擎 Seed-ASR 2.0 Standard（豆包录音文件识别模型2.0-标准版）来识别各平台发送的语音消息。通过 `beforeMessageProcessed` 钩子拦截语音，转写后伪装成普通文本消息，对下游大模型完全透明。支持所有平台（飞书、Telegram、钉钉等），无平台限制。
+
+## Quick Start
+
+### 1. 配置环境变量
+
+在 `.env` 文件中配置（JSON 格式）：
+
+```json
+{
+  "skills": {
+    "entries": {
+      "doubao-asr": {
+        "enabled": true,
+        "env": {
+          "VOLC_API_KEY": "你的火山引擎API Key",
+          "R2_ENDPOINT": "你的R2端点URL",
+          "R2_ACCESS_KEY_ID": "你的R2 Access Key ID",
+          "R2_SECRET_ACCESS_KEY": "你的R2 Secret Access Key",
+          "R2_REGION": "auto"
+        }
+      }
+    }
+  }
+}
+```
+
+### 2. 安装依赖
+
+```bash
+cd skills/doubao-asr
+npm install
+```
+
+## Core Workflow
+
+```
+平台语音消息（飞书/Telegram/钉钉等）
+    ↓
+[Skill 拦截: beforeMessageProcessed]
+    ↓
+[获取音频: 远程URL直接使用 / 本地文件上传R2]
+    ↓
+[提交火山引擎: submitTask()]
+    ↓
+[轮询结果: waitForResult()]
+    ↓
+[注入上下文: message.type = 'text', message.text = transcript]
+    ↓
+OpenClaw 大模型处理
+```
+
+## Seed-ASR 2.0 音频格式参考
+
+详见 [references/audio-formats.md](references/audio-formats.md)
+
+**关键要点：**
+- ✅ 支持 Opus（封装为 ogg 容器）- 飞书默认格式
+- ✅ 支持 MP3、WAV、PCM
+- 🎯 推荐参数：16000 Hz 采样率，单声道，16 bit
+- ⏱️ 音频时长建议 ≤ 60s
+
+## Configuration
+
+### Environment Variables
+
+| 变量 | 必需 | 说明 |
+|------|------|------|
+| `VOLC_API_KEY` | ✅ | 火山引擎语音服务 API Key（UUID 格式） |
+| `VOLC_RESOURCE_ID` | ❌ | 模型 Resource ID，默认 `volc.seedasr.auc`（2.0） |
+| `R2_ENDPOINT` | ✅ | Cloudflare R2 端点 URL |
+| `R2_ACCESS_KEY_ID` | ✅ | R2 Access Key ID |
+| `R2_SECRET_ACCESS_KEY` | ✅ | R2 Secret Access Key |
+| `R2_REGION` | ❌ | R2 区域，默认 `auto` |
+| `R2_PUBLIC_URL` | ❌ | R2 自定义公开域名，不设置则使用预签名 URL |
+
+### 配置方法
+
+在 `.env` 文件中配置（JSON 格式），参考 `.env.example`。
+
+## Resources
+
+### scripts/
+
+- **volcengine.js** - 火山引擎 Seed-ASR 2.0 API 封装（x-api-key 鉴权、任务提交、结果轮询）
+- **r2-client.js** - Cloudflare R2 对象存储客户端（上传音频、生成预签名 URL、自动清理）
+- **feishu-client.js** - 飞书 API 客户端（可选，用于直接下载飞书文件）
+
+### references/
+
+- **audio-formats.md** - Seed-ASR 2.0 支持的音频格式及参数详细说明
+- **api-reference.md** - 火山引擎和飞书 API 参考文档
+
+## Error Handling
+
+### Graceful Degradation
+
+当语音识别失败时，Skill 会优雅降级：
+
+```javascript
+context.message.text = "*(系统提示：语音消息解析失败，请尝试文字输入)*";
+context.message.type = "text";
+```
+
+### Common Errors
+
+| 错误 | 原因 | 解决方案 |
+|------|------|----------|
+| 未配置 API Key | `VOLC_API_KEY` 未设置 | 检查 `.env` 中的 `VOLC_API_KEY` 配置 |
+| R2 配置不完整 | R2 环境变量未设置 | 检查 `R2_ENDPOINT`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY` |
+| 音频格式不支持 | 平台语音格式问题 | 安装 ffmpeg 转码，见 [references/audio-formats.md](references/audio-formats.md) |
+| API 调用失败 | 火山引擎鉴权问题 | 检查 API Key 权限和余额 |
+
+## Development
+
+### Testing the Hook
+
+Skill 使用 `beforeMessageProcessed` 钩子，会在每条消息进入大模型前触发。
+
+处理条件：
+- `message.type === 'audio'` 或 `message.media` 中包含音频附件
+- 不限平台，所有平台的语音消息均会处理
+
+其他类型消息原样透传。
