@@ -1,10 +1,10 @@
 ---
-name: doubao-asr
+name: volcengine-asr
 description: 使用火山引擎 Seed-ASR 2.0（豆包录音文件识别模型）识别语音消息。在消息进入大模型前拦截语音并转写为文本，对下游透明。支持所有平台（飞书、Telegram、钉钉等）的语音消息处理。使用场景：语音转文字、中文语音识别。
 metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
 ---
 
-# Doubao ASR Skill
+# Volcengine ASR Skill
 
 ## Overview
 
@@ -20,7 +20,7 @@ metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
 {
   "skills": {
     "entries": {
-      "doubao-asr": {
+      "volcengine-asr": {
         "enabled": true,
         "env": {
           "VOLC_API_KEY": "你的火山引擎API Key",
@@ -38,7 +38,7 @@ metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
 ### 2. 安装依赖
 
 ```bash
-cd skills/doubao-asr
+cd skills/volcengine-asr
 npm install
 ```
 

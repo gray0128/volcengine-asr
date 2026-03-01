@@ -1,5 +1,5 @@
 {
-  "name": "doubao-asr",
+  "name": "volcengine-asr",
   "version": "1.0.0",
   "description": "OpenClaw Skill for Feishu audio transcription using Volcengine Seed-ASR 2.0",
   "main": "index.js",

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Doubao ASR Skill 安装脚本
+# Volcengine ASR Skill 安装脚本
 # 使用方式: curl -fsSL <URL>/install.sh | bash
 # =============================================================================
 
@@ -25,7 +25,7 @@ WARN="${YELLOW}[!]${NC}"
 # 默认配置
 REPO_URL="https://github.com/gray0128/volcengine-asr.git"
 OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
-SKILL_NAME="doubao-asr"
+SKILL_NAME="volcengine-asr"
 SKILL_DIR=""
 CONFIG_FILE=""
 
@@ -37,7 +37,7 @@ print_banner() {
     echo ""
     echo -e "${CYAN}${BOLD}"
     echo "  ╔══════════════════════════════════════════╗"
-    echo "  ║        Doubao ASR Skill Installer        ║"
+    echo "  ║        Volcengine ASR Installer          ║"
     echo "  ║   火山引擎 Seed-ASR 2.0 语音识别插件    ║"
     echo "  ╚══════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -328,7 +328,7 @@ print_manual_config_guide() {
     echo -e "  {"
     echo -e "    \"skills\": {"
     echo -e "      \"entries\": {"
-    echo -e "        ${YELLOW}\"doubao-asr\": {${NC}"
+    echo -e "        ${YELLOW}\"volcengine-asr\": {${NC}"
     echo -e "          ${YELLOW}\"enabled\": true,${NC}"
     echo -e "          ${YELLOW}\"env\": {${NC}"
     echo -e "            ${YELLOW}\"VOLC_API_KEY\": \"你的火山引擎API Key\",${NC}"

@@ -52,6 +52,6 @@ systemctl --user status openclaw-gateway
 ## 步骤 4: 验证
 
 重启后，发一条语音消息（任意平台），看看 OpenClaw 日志中有没有:
-"[Doubao-ASR] 收到消息"
+"[Volcengine-ASR] 收到消息"
 
 如果有，说明 skill 已加载！

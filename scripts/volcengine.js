@@ -53,7 +53,7 @@ async function submitTask(audioUrl, options = {}) {
 
   const body = {
     user: {
-      uid: options.uid || 'openclaw-doubao-asr',
+      uid: options.uid || 'openclaw-volcengine-asr',
     },
     audio: {
       url: audioUrl,

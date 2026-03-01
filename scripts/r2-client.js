@@ -7,7 +7,7 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = re
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 
-const BUCKET_NAME = 'doubao-asr';
+const BUCKET_NAME = 'volcengine-asr';
 const PRESIGN_EXPIRES = 600; // 预签名 URL 有效期 10 分钟
 const CLEANUP_MS = 15 * 60 * 1000; // 15 分钟后清理文件
 

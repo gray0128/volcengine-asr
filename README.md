@@ -1,4 +1,4 @@
-# Doubao ASR
+# Volcengine ASR
 
 基于火山引擎 Seed-ASR 2.0（豆包大模型录音文件识别标准版）的 OpenClaw 语音识别插件。
 
@@ -45,8 +45,8 @@ curl -fsSL https://raw.githubusercontent.com/gray0128/volcengine-asr/main/instal
 
 ```bash
 cd ~/.openclaw/skills
-git clone https://github.com/gray0128/volcengine-asr.git doubao-asr
-cd doubao-asr
+git clone https://github.com/gray0128/volcengine-asr.git volcengine-asr
+cd volcengine-asr
 npm install
 ```
 
@@ -58,7 +58,7 @@ npm install
 {
   "skills": {
     "entries": {
-      "doubao-asr": {
+      "volcengine-asr": {
         "enabled": true,
         "env": {
           "VOLC_API_KEY": "你的火山引擎API Key (UUID格式)",

@@ -1,5 +1,5 @@
 /**
- * Doubao ASR Skill for OpenClaw
+ * Volcengine ASR Skill for OpenClaw
  * 使用火山引擎 Seed-ASR 2.0 (大模型录音文件识别标准版) 识别飞书语音消息
  */
 
@@ -36,7 +36,7 @@ function inferAudioFormat(filePath, contentType) {
 }
 
 module.exports = {
-  name: 'doubao-asr',
+  name: 'volcengine-asr',
   version: '2.0.0',
   description: 'Intercept Feishu audio and transcribe via Volcengine Seed-ASR 2.0 (BigModel Standard)',
 
@@ -48,7 +48,7 @@ module.exports = {
       const { message, platform } = context;
 
       // 调试日志
-      console.log('[Doubao-ASR] 收到消息:', {
+      console.log('[Volcengine-ASR] 收到消息:', {
         type: message.type,
         platform: platform?.id,
         messageKeys: Object.keys(message),
@@ -68,14 +68,14 @@ module.exports = {
 
       // 检查配置
       if (!isConfigured()) {
-        console.warn('[Doubao-ASR] 未配置 VOLC_API_KEY');
+        console.warn('[Volcengine-ASR] 未配置 VOLC_API_KEY');
         context.message.text = '*(系统提示：语音识别功能未配置，请使用文字输入)*';
         context.message.type = 'text';
         return context;
       }
 
       try {
-        console.log('[Doubao-ASR] 开始处理飞书语音消息');
+        console.log('[Volcengine-ASR] 开始处理语音消息');
 
         let audioUrl;
         let audioFormat;
@@ -95,14 +95,14 @@ module.exports = {
             if (audioMedia.url) {
               // 远程 URL 直接使用
               audioUrl = audioMedia.url;
-              console.log(`[Doubao-ASR] 使用远程 URL: ${audioUrl}`);
+              console.log(`[Volcengine-ASR] 使用远程 URL: ${audioUrl}`);
             } else if (audioMedia.path) {
               // 本地文件 → 上传到 R2 → 获取公开 URL
-              console.log(`[Doubao-ASR] 本地文件，上传到 R2: ${audioMedia.path}`);
+              console.log(`[Volcengine-ASR] 本地文件，上传到 R2: ${audioMedia.path}`);
               const fileBuffer = await fs.readFile(audioMedia.path);
               const r2Result = await uploadWithAutoCleanup(fileBuffer, audioFormat.mime, audioFormat.ext);
               audioUrl = r2Result.url;
-              console.log(`[Doubao-ASR] R2 URL: ${audioUrl}`);
+              console.log(`[Volcengine-ASR] R2 URL: ${audioUrl}`);
             }
           }
         }
@@ -118,11 +118,11 @@ module.exports = {
           rate: 16000,
           channel: 1,
         });
-        console.log(`[Doubao-ASR] 任务已提交: ${requestId}`);
+        console.log(`[Volcengine-ASR] 任务已提交: ${requestId}`);
 
         // 等待并获取结果
         const transcriptText = await waitForResult(requestId);
-        console.log(`[Doubao-ASR] 识别结果: ${transcriptText}`);
+        console.log(`[Volcengine-ASR] 识别结果: ${transcriptText}`);
 
         // 注入上下文
         context.message.type = 'text';
@@ -135,7 +135,7 @@ module.exports = {
         };
 
       } catch (error) {
-        console.error('[Doubao-ASR] 音频解析失败:', error);
+        console.error('[Volcengine-ASR] 音频解析失败:', error);
         context.message.text = `*(系统提示：语音消息解析失败: ${error.message})*`;
         context.message.type = 'text';
       }
