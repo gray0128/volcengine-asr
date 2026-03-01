@@ -66,7 +66,7 @@ npm install
           "S3_ACCESS_KEY_ID": "你的S3 Access Key ID",
           "S3_SECRET_ACCESS_KEY": "你的S3 Secret Access Key",
           "S3_BUCKET": "你的S3 Bucket名称",
-          "S3_REGION": "auto"
+          "S3_REGION": "auto，或者你的S3 Bucket区域"
         }
       }
     }
