@@ -11,7 +11,7 @@
     ↓
 Skill 拦截 (beforeMessageProcessed)
     ↓
-获取音频（远程URL直接使用 / 本地文件上传R2）
+获取音频（远程URL直接使用 / 本地文件上传S3）
     ↓
 提交火山引擎 Seed-ASR 2.0 识别
     ↓
@@ -62,11 +62,11 @@ npm install
         "enabled": true,
         "env": {
           "VOLC_API_KEY": "你的火山引擎API Key (UUID格式)",
-          "R2_ENDPOINT": "你的Cloudflare R2端点URL",
-          "R2_ACCESS_KEY_ID": "你的R2 Access Key ID",
-          "R2_SECRET_ACCESS_KEY": "你的R2 Secret Access Key",
-          "R2_BUCKET": "你的R2 Bucket名称",
-          "R2_REGION": "auto"
+          "S3_ENDPOINT": "你的S3端点URL",
+          "S3_ACCESS_KEY_ID": "你的S3 Access Key ID",
+          "S3_SECRET_ACCESS_KEY": "你的S3 Secret Access Key",
+          "S3_BUCKET": "你的S3 Bucket名称",
+          "S3_REGION": "auto"
         }
       }
     }
@@ -80,12 +80,12 @@ npm install
 |------|------|------|
 | `VOLC_API_KEY` | 是 | 火山引擎语音服务 API Key（UUID 格式） |
 | `VOLC_RESOURCE_ID` | 否 | 模型 Resource ID，默认 `volc.seedasr.auc` |
-| `R2_ENDPOINT` | 是 | Cloudflare R2 端点 URL |
-| `R2_ACCESS_KEY_ID` | 是 | R2 Access Key ID |
-| `R2_SECRET_ACCESS_KEY` | 是 | R2 Secret Access Key |
-| `R2_BUCKET` | 否 | R2 Bucket 名称，默认 `volcengine-asr` |
-| `R2_REGION` | 否 | R2 区域，默认 `auto` |
-| `R2_PUBLIC_URL` | 否 | R2 自定义公开域名，不设置则使用预签名 URL |
+| `S3_ENDPOINT` | 是 | S3 兼容存储端点 URL |
+| `S3_ACCESS_KEY_ID` | 是 | S3 Access Key ID |
+| `S3_SECRET_ACCESS_KEY` | 是 | S3 Secret Access Key |
+| `S3_BUCKET` | 否 | S3 Bucket 名称，默认 `volcengine-asr` |
+| `S3_REGION` | 否 | S3 区域，默认 `auto` |
+| `S3_PUBLIC_URL` | 否 | S3 自定义公开域名，不设置则使用预签名 URL |
 
 ## 项目结构
 
@@ -93,7 +93,7 @@ npm install
 ├── index.js                  # Skill 主入口，beforeMessageProcessed 钩子
 ├── scripts/
 │   ├── volcengine.js         # 火山引擎 Seed-ASR 2.0 API 封装
-│   ├── r2-client.js          # Cloudflare R2 对象存储客户端
+│   ├── s3-client.js          # S3 兼容对象存储客户端
 │   └── feishu-client.js      # 飞书 API 客户端（可选）
 ├── references/
 │   ├── audio-formats.md      # 音频格式参考

@@ -1,24 +1,24 @@
 /**
- * Cloudflare R2 对象存储客户端
- * 用于将本地音频文件上传到 R2，通过预签名 URL 提供临时公开访问
+ * S3 兼容对象存储客户端
+ * 用于将本地音频文件上传到 S3 兼容存储（Cloudflare R2、AWS S3、MinIO 等），通过预签名 URL 提供临时公开访问
  */
 
 const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 
-const BUCKET_NAME = process.env.R2_BUCKET || 'volcengine-asr';
+const BUCKET_NAME = process.env.S3_BUCKET || 'volcengine-asr';
 const PRESIGN_EXPIRES = 600; // 预签名 URL 有效期 10 分钟
 const CLEANUP_MS = 15 * 60 * 1000; // 15 分钟后清理文件
 
-function getR2Client() {
-    const endpoint = process.env.R2_ENDPOINT;
-    const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
-    const region = process.env.R2_REGION || 'auto';
+function getS3Client() {
+    const endpoint = process.env.S3_ENDPOINT;
+    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+    const region = process.env.S3_REGION || 'auto';
 
     if (!endpoint || !accessKeyId || !secretAccessKey) {
-        throw new Error('R2 配置不完整，需要 R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY');
+        throw new Error('S3 配置不完整，需要 S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY');
     }
 
     return new S3Client({
@@ -33,14 +33,14 @@ function getR2Client() {
 }
 
 /**
- * 上传文件到 R2 并返回预签名 URL
+ * 上传文件到 S3 并返回预签名 URL
  * @param {Buffer} fileBuffer - 文件内容
  * @param {string} contentType - MIME 类型
  * @param {string} [ext] - 文件扩展名
  * @returns {Promise<{key: string, url: string}>}
  */
 async function uploadAudio(fileBuffer, contentType, ext = '.ogg') {
-    const client = getR2Client();
+    const client = getS3Client();
     const key = `audio/${crypto.randomUUID()}${ext}`;
 
     // 上传文件
@@ -53,7 +53,7 @@ async function uploadAudio(fileBuffer, contentType, ext = '.ogg') {
 
     // 生成访问 URL
     let url;
-    const publicBase = process.env.R2_PUBLIC_URL;
+    const publicBase = process.env.S3_PUBLIC_URL;
     if (publicBase) {
         // 自定义域名（公开访问），无需签名
         url = `${publicBase}/${key}`;
@@ -65,23 +65,23 @@ async function uploadAudio(fileBuffer, contentType, ext = '.ogg') {
         }), { expiresIn: PRESIGN_EXPIRES });
     }
 
-    console.log(`[R2] 已上传: ${key} (${(fileBuffer.length / 1024).toFixed(1)} KB)`);
+    console.log(`[S3] 已上传: ${key} (${(fileBuffer.length / 1024).toFixed(1)} KB)`);
     return { key, url };
 }
 
 /**
- * 删除 R2 上的文件
+ * 删除 S3 上的文件
  */
 async function deleteAudio(key) {
     try {
-        const client = getR2Client();
+        const client = getS3Client();
         await client.send(new DeleteObjectCommand({
             Bucket: BUCKET_NAME,
             Key: key,
         }));
-        console.log(`[R2] 已清理: ${key}`);
+        console.log(`[S3] 已清理: ${key}`);
     } catch (err) {
-        console.warn(`[R2] 清理失败 (${key}):`, err.message);
+        console.warn(`[S3] 清理失败 (${key}):`, err.message);
     }
 }
 

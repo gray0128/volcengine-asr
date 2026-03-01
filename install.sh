@@ -181,14 +181,14 @@ collect_config() {
     echo ""
     echo -e "  ${BOLD}必需参数:${NC}"
     echo -e "    - VOLC_API_KEY        火山引擎 API Key (UUID 格式)"
-    echo -e "    - R2_ENDPOINT         Cloudflare R2 端点 URL"
-    echo -e "    - R2_ACCESS_KEY_ID    R2 Access Key ID"
-    echo -e "    - R2_SECRET_ACCESS_KEY R2 Secret Access Key"
-    echo -e "    - R2_BUCKET           R2 Bucket 名称"
+    echo -e "    - S3_ENDPOINT         S3 兼容存储端点 URL"
+    echo -e "    - S3_ACCESS_KEY_ID    S3 Access Key ID"
+    echo -e "    - S3_SECRET_ACCESS_KEY S3 Secret Access Key"
+    echo -e "    - S3_BUCKET           S3 Bucket 名称"
     echo ""
     echo -e "  ${BOLD}可选参数:${NC}"
-    echo -e "    - R2_REGION           R2 区域 (默认: auto)"
-    echo -e "    - R2_PUBLIC_URL       R2 自定义公开域名"
+    echo -e "    - S3_REGION           S3 区域 (默认: auto)"
+    echo -e "    - S3_PUBLIC_URL       S3 自定义公开域名"
     echo -e "    - VOLC_RESOURCE_ID    模型 Resource ID (默认: volc.seedasr.auc)"
     echo ""
 
@@ -208,24 +208,24 @@ collect_config() {
     prompt_input "VOLC_RESOURCE_ID" VOLC_RESOURCE_ID "volc.seedasr.auc"
 
     echo -e "\n  ${BOLD}-- Cloudflare R2 配置 --${NC}"
-    prompt_input "R2_ENDPOINT" R2_ENDPOINT
-    while [ -z "${R2_ENDPOINT:-}" ]; do
-        echo -e "  ${WARN} R2_ENDPOINT 为必填项"
-        prompt_input "R2_ENDPOINT" R2_ENDPOINT
+    prompt_input "S3_ENDPOINT" S3_ENDPOINT
+    while [ -z "${S3_ENDPOINT:-}" ]; do
+        echo -e "  ${WARN} S3_ENDPOINT 为必填项"
+        prompt_input "S3_ENDPOINT" S3_ENDPOINT
     done
-    prompt_input "R2_ACCESS_KEY_ID" R2_ACCESS_KEY_ID
-    while [ -z "${R2_ACCESS_KEY_ID:-}" ]; do
-        echo -e "  ${WARN} R2_ACCESS_KEY_ID 为必填项"
-        prompt_input "R2_ACCESS_KEY_ID" R2_ACCESS_KEY_ID
+    prompt_input "S3_ACCESS_KEY_ID" S3_ACCESS_KEY_ID
+    while [ -z "${S3_ACCESS_KEY_ID:-}" ]; do
+        echo -e "  ${WARN} S3_ACCESS_KEY_ID 为必填项"
+        prompt_input "S3_ACCESS_KEY_ID" S3_ACCESS_KEY_ID
     done
-    prompt_input "R2_SECRET_ACCESS_KEY" R2_SECRET_ACCESS_KEY "" "true"
-    while [ -z "${R2_SECRET_ACCESS_KEY:-}" ]; do
-        echo -e "  ${WARN} R2_SECRET_ACCESS_KEY 为必填项"
-        prompt_input "R2_SECRET_ACCESS_KEY" R2_SECRET_ACCESS_KEY "" "true"
+    prompt_input "S3_SECRET_ACCESS_KEY" S3_SECRET_ACCESS_KEY "" "true"
+    while [ -z "${S3_SECRET_ACCESS_KEY:-}" ]; do
+        echo -e "  ${WARN} S3_SECRET_ACCESS_KEY 为必填项"
+        prompt_input "S3_SECRET_ACCESS_KEY" S3_SECRET_ACCESS_KEY "" "true"
     done
-    prompt_input "R2_BUCKET" R2_BUCKET "volcengine-asr"
-    prompt_input "R2_REGION" R2_REGION "auto"
-    prompt_input "R2_PUBLIC_URL (可选，直接回车跳过)" R2_PUBLIC_URL ""
+    prompt_input "S3_BUCKET" S3_BUCKET "volcengine-asr"
+    prompt_input "S3_REGION" S3_REGION "auto"
+    prompt_input "S3_PUBLIC_URL (可选，直接回车跳过)" S3_PUBLIC_URL ""
 }
 
 # -----------------------------------------------------------------------------
@@ -271,20 +271,20 @@ write_config() {
         env_json+=",\"VOLC_RESOURCE_ID\":\"${VOLC_RESOURCE_ID}\""
     fi
 
-    env_json+=",\"R2_ENDPOINT\":\"${R2_ENDPOINT}\""
-    env_json+=",\"R2_ACCESS_KEY_ID\":\"${R2_ACCESS_KEY_ID}\""
-    env_json+=",\"R2_SECRET_ACCESS_KEY\":\"${R2_SECRET_ACCESS_KEY}\""
+    env_json+=",\"S3_ENDPOINT\":\"${S3_ENDPOINT}\""
+    env_json+=",\"S3_ACCESS_KEY_ID\":\"${S3_ACCESS_KEY_ID}\""
+    env_json+=",\"S3_SECRET_ACCESS_KEY\":\"${S3_SECRET_ACCESS_KEY}\""
 
-    if [ "${R2_BUCKET}" != "volcengine-asr" ]; then
-        env_json+=",\"R2_BUCKET\":\"${R2_BUCKET}\""
+    if [ "${S3_BUCKET}" != "volcengine-asr" ]; then
+        env_json+=",\"S3_BUCKET\":\"${S3_BUCKET}\""
     fi
 
-    if [ "${R2_REGION}" != "auto" ]; then
-        env_json+=",\"R2_REGION\":\"${R2_REGION}\""
+    if [ "${S3_REGION}" != "auto" ]; then
+        env_json+=",\"S3_REGION\":\"${S3_REGION}\""
     fi
 
-    if [ -n "${R2_PUBLIC_URL:-}" ]; then
-        env_json+=",\"R2_PUBLIC_URL\":\"${R2_PUBLIC_URL}\""
+    if [ -n "${S3_PUBLIC_URL:-}" ]; then
+        env_json+=",\"S3_PUBLIC_URL\":\"${S3_PUBLIC_URL}\""
     fi
 
     env_json+="}"
@@ -338,11 +338,11 @@ print_manual_config_guide() {
     echo -e "          ${YELLOW}\"enabled\": true,${NC}"
     echo -e "          ${YELLOW}\"env\": {${NC}"
     echo -e "            ${YELLOW}\"VOLC_API_KEY\": \"你的火山引擎API Key\",${NC}"
-    echo -e "            ${YELLOW}\"R2_ENDPOINT\": \"你的R2端点URL\",${NC}"
-    echo -e "            ${YELLOW}\"R2_ACCESS_KEY_ID\": \"你的R2 Access Key ID\",${NC}"
-    echo -e "            ${YELLOW}\"R2_SECRET_ACCESS_KEY\": \"你的R2 Secret Access Key\",${NC}"
-    echo -e "            ${YELLOW}\"R2_BUCKET\": \"你的R2 Bucket名称\",${NC}"
-    echo -e "            ${YELLOW}\"R2_REGION\": \"auto\"${NC}"
+    echo -e "            ${YELLOW}\"S3_ENDPOINT\": \"你的S3端点URL\",${NC}"
+    echo -e "            ${YELLOW}\"S3_ACCESS_KEY_ID\": \"你的S3 Access Key ID\",${NC}"
+    echo -e "            ${YELLOW}\"S3_SECRET_ACCESS_KEY\": \"你的S3 Secret Access Key\",${NC}"
+    echo -e "            ${YELLOW}\"S3_BUCKET\": \"你的S3 Bucket名称\",${NC}"
+    echo -e "            ${YELLOW}\"S3_REGION\": \"auto\"${NC}"
     echo -e "          ${YELLOW}}${NC}"
     echo -e "        ${YELLOW}}${NC}"
     echo -e "      }"

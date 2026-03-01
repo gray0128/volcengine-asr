@@ -24,11 +24,11 @@ metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
         "enabled": true,
         "env": {
           "VOLC_API_KEY": "你的火山引擎API Key",
-          "R2_ENDPOINT": "你的R2端点URL",
-          "R2_ACCESS_KEY_ID": "你的R2 Access Key ID",
-          "R2_SECRET_ACCESS_KEY": "你的R2 Secret Access Key",
-          "R2_BUCKET": "你的R2 Bucket名称",
-          "R2_REGION": "auto"
+          "S3_ENDPOINT": "你的S3端点URL",
+          "S3_ACCESS_KEY_ID": "你的S3 Access Key ID",
+          "S3_SECRET_ACCESS_KEY": "你的S3 Secret Access Key",
+          "S3_BUCKET": "你的S3 Bucket名称",
+          "S3_REGION": "auto"
         }
       }
     }
@@ -50,7 +50,7 @@ npm install
     ↓
 [Skill 拦截: beforeMessageProcessed]
     ↓
-[获取音频: 远程URL直接使用 / 本地文件上传R2]
+[获取音频: 远程URL直接使用 / 本地文件上传S3]
     ↓
 [提交火山引擎: submitTask()]
     ↓
@@ -79,12 +79,12 @@ OpenClaw 大模型处理
 |------|------|------|
 | `VOLC_API_KEY` | ✅ | 火山引擎语音服务 API Key（UUID 格式） |
 | `VOLC_RESOURCE_ID` | ❌ | 模型 Resource ID，默认 `volc.seedasr.auc`（2.0） |
-| `R2_ENDPOINT` | ✅ | Cloudflare R2 端点 URL |
-| `R2_ACCESS_KEY_ID` | ✅ | R2 Access Key ID |
-| `R2_SECRET_ACCESS_KEY` | ✅ | R2 Secret Access Key |
-| `R2_BUCKET` | ❌ | R2 Bucket 名称，默认 `volcengine-asr` |
-| `R2_REGION` | ❌ | R2 区域，默认 `auto` |
-| `R2_PUBLIC_URL` | ❌ | R2 自定义公开域名，不设置则使用预签名 URL |
+| `S3_ENDPOINT` | ✅ | S3 兼容存储端点 URL |
+| `S3_ACCESS_KEY_ID` | ✅ | S3 Access Key ID |
+| `S3_SECRET_ACCESS_KEY` | ✅ | S3 Secret Access Key |
+| `S3_BUCKET` | ❌ | S3 Bucket 名称，默认 `volcengine-asr` |
+| `S3_REGION` | ❌ | S3 区域，默认 `auto` |
+| `S3_PUBLIC_URL` | ❌ | S3 自定义公开域名，不设置则使用预签名 URL |
 
 ### 配置方法
 
@@ -95,7 +95,7 @@ OpenClaw 大模型处理
 ### scripts/
 
 - **volcengine.js** - 火山引擎 Seed-ASR 2.0 API 封装（x-api-key 鉴权、任务提交、结果轮询）
-- **r2-client.js** - Cloudflare R2 对象存储客户端（上传音频、生成预签名 URL、自动清理）
+- **s3-client.js** - S3 兼容对象存储客户端（上传音频、生成预签名 URL、自动清理）
 - **feishu-client.js** - 飞书 API 客户端（可选，用于直接下载飞书文件）
 
 ### references/
@@ -119,7 +119,7 @@ context.message.type = "text";
 | 错误 | 原因 | 解决方案 |
 |------|------|----------|
 | 未配置 API Key | `VOLC_API_KEY` 未设置 | 检查 `.env` 中的 `VOLC_API_KEY` 配置 |
-| R2 配置不完整 | R2 环境变量未设置 | 检查 `R2_ENDPOINT`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY` |
+| S3 配置不完整 | S3 环境变量未设置 | 检查 `S3_ENDPOINT`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` |
 | 音频格式不支持 | 平台语音格式问题 | 安装 ffmpeg 转码，见 [references/audio-formats.md](references/audio-formats.md) |
 | API 调用失败 | 火山引擎鉴权问题 | 检查 API Key 权限和余额 |
 

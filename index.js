@@ -6,7 +6,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { submitTask, waitForResult } = require('./scripts/volcengine');
-const { uploadWithAutoCleanup } = require('./scripts/r2-client');
+const { uploadWithAutoCleanup } = require('./scripts/s3-client');
 
 function isConfigured() {
   return !!process.env.VOLC_API_KEY;
@@ -97,12 +97,12 @@ module.exports = {
               audioUrl = audioMedia.url;
               console.log(`[Volcengine-ASR] 使用远程 URL: ${audioUrl}`);
             } else if (audioMedia.path) {
-              // 本地文件 → 上传到 R2 → 获取公开 URL
-              console.log(`[Volcengine-ASR] 本地文件，上传到 R2: ${audioMedia.path}`);
+              // 本地文件 → 上传到 S3 → 获取公开 URL
+              console.log(`[Volcengine-ASR] 本地文件，上传到 S3: ${audioMedia.path}`);
               const fileBuffer = await fs.readFile(audioMedia.path);
               const r2Result = await uploadWithAutoCleanup(fileBuffer, audioFormat.mime, audioFormat.ext);
               audioUrl = r2Result.url;
-              console.log(`[Volcengine-ASR] R2 URL: ${audioUrl}`);
+              console.log(`[Volcengine-ASR] S3 URL: ${audioUrl}`);
             }
           }
         }

@@ -35,7 +35,7 @@ function loadEnv() {
 loadEnv();
 
 const { submitTask, waitForResult } = require('./scripts/volcengine');
-const { uploadWithAutoCleanup } = require('./scripts/r2-client');
+const { uploadWithAutoCleanup } = require('./scripts/s3-client');
 
 /**
  * 根据文件扩展名推断音频格式参数 (与 index.js 中的逻辑一致)
