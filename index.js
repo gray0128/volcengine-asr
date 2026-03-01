@@ -71,7 +71,7 @@ module.exports = {
     /**
      * 在消息进入大模型前拦截处理
      */
-    'beforeMessageProcessed': async (context) => {
+    'messagePreProcess': async (context) => {
       const { message, platform } = context;
 
       // 调试日志

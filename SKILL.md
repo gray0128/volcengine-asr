@@ -19,7 +19,7 @@ metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
 你（大模型助理）**无需主动使用任何 Tool 来调用此 Skill**。此 Skill 已经自动挂载为全局拦截。
 
 当用户对你发送语音时：
-1. 本 Skill 会在钩子（`beforeMessageProcessed`）层截获它。
+1. 本 Skill 会在钩子（`messagePreProcess`）层截获它。
 2. 转写结果将会自动填充至用户的 `message.text` 中，并附带元数据 `asr_provider` 通知你。
 3. 当你最终收到用户 Prompt 时，你看到的完全是一句正常由人类“打字键入”的文本。
 
