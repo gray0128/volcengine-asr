@@ -27,6 +27,7 @@ metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
           "R2_ENDPOINT": "你的R2端点URL",
           "R2_ACCESS_KEY_ID": "你的R2 Access Key ID",
           "R2_SECRET_ACCESS_KEY": "你的R2 Secret Access Key",
+          "R2_BUCKET": "你的R2 Bucket名称",
           "R2_REGION": "auto"
         }
       }
@@ -81,6 +82,7 @@ OpenClaw 大模型处理
 | `R2_ENDPOINT` | ✅ | Cloudflare R2 端点 URL |
 | `R2_ACCESS_KEY_ID` | ✅ | R2 Access Key ID |
 | `R2_SECRET_ACCESS_KEY` | ✅ | R2 Secret Access Key |
+| `R2_BUCKET` | ❌ | R2 Bucket 名称，默认 `volcengine-asr` |
 | `R2_REGION` | ❌ | R2 区域，默认 `auto` |
 | `R2_PUBLIC_URL` | ❌ | R2 自定义公开域名，不设置则使用预签名 URL |
 

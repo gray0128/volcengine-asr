@@ -184,6 +184,7 @@ collect_config() {
     echo -e "    - R2_ENDPOINT         Cloudflare R2 端点 URL"
     echo -e "    - R2_ACCESS_KEY_ID    R2 Access Key ID"
     echo -e "    - R2_SECRET_ACCESS_KEY R2 Secret Access Key"
+    echo -e "    - R2_BUCKET           R2 Bucket 名称"
     echo ""
     echo -e "  ${BOLD}可选参数:${NC}"
     echo -e "    - R2_REGION           R2 区域 (默认: auto)"
@@ -222,6 +223,7 @@ collect_config() {
         echo -e "  ${WARN} R2_SECRET_ACCESS_KEY 为必填项"
         prompt_input "R2_SECRET_ACCESS_KEY" R2_SECRET_ACCESS_KEY "" "true"
     done
+    prompt_input "R2_BUCKET" R2_BUCKET "volcengine-asr"
     prompt_input "R2_REGION" R2_REGION "auto"
     prompt_input "R2_PUBLIC_URL (可选，直接回车跳过)" R2_PUBLIC_URL ""
 }
@@ -272,6 +274,10 @@ write_config() {
     env_json+=",\"R2_ENDPOINT\":\"${R2_ENDPOINT}\""
     env_json+=",\"R2_ACCESS_KEY_ID\":\"${R2_ACCESS_KEY_ID}\""
     env_json+=",\"R2_SECRET_ACCESS_KEY\":\"${R2_SECRET_ACCESS_KEY}\""
+
+    if [ "${R2_BUCKET}" != "volcengine-asr" ]; then
+        env_json+=",\"R2_BUCKET\":\"${R2_BUCKET}\""
+    fi
 
     if [ "${R2_REGION}" != "auto" ]; then
         env_json+=",\"R2_REGION\":\"${R2_REGION}\""
@@ -335,6 +341,7 @@ print_manual_config_guide() {
     echo -e "            ${YELLOW}\"R2_ENDPOINT\": \"你的R2端点URL\",${NC}"
     echo -e "            ${YELLOW}\"R2_ACCESS_KEY_ID\": \"你的R2 Access Key ID\",${NC}"
     echo -e "            ${YELLOW}\"R2_SECRET_ACCESS_KEY\": \"你的R2 Secret Access Key\",${NC}"
+    echo -e "            ${YELLOW}\"R2_BUCKET\": \"你的R2 Bucket名称\",${NC}"
     echo -e "            ${YELLOW}\"R2_REGION\": \"auto\"${NC}"
     echo -e "          ${YELLOW}}${NC}"
     echo -e "        ${YELLOW}}${NC}"
