@@ -108,7 +108,7 @@ function findAudioUrlsInMessages(messages) {
   return audioItems;
 }
 
-export default function (api) {
+exports.register = function (api) {
   api.registerHook('before_prompt_build', async (event, ctx) => {
     // 检查配置
     if (!isConfigured()) {

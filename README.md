@@ -12,13 +12,9 @@
 
 ### 步骤
 1. 请确保你在本地检出了本仓库，并执行 `npm install` 安装完依赖。
-2. 在 OpenClaw 终端执行安装（链接本地插件）：
+2. 在 OpenClaw 终端执行安装（指定仓库所在路径）：
    ```bash
-   openclaw plugins install ./volcengine-asr
-   ```
-   或者使用绝对路径：
-   ```bash
-   openclaw plugins install /Volumes/fanxiang/github/volcengine-asr
+   openclaw plugins install /path/to/volcengine-asr
    ```
 3. 在 `~/.openclaw/openclaw.json` (或系统配置文件) 中，确保已添加配置：
    ```json
@@ -32,8 +28,8 @@
              "S3_ENDPOINT": "...",
              "S3_REGION": "...",
              "S3_BUCKET": "...",
-             "S3_ACCESS_KEY": "...",
-             "S3_SECRET_KEY": "..."
+             "S3_ACCESS_KEY_ID": "...",
+             "S3_SECRET_ACCESS_KEY": "..."
            }
          }
        }

@@ -14,7 +14,7 @@
   },
   "openclaw": {
     "extensions": [
-      "./openclaw.plugin.json"
+      "./index.js"
     ]
   }
 }

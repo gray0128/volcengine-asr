@@ -1,5 +1,7 @@
 # 常见问题与排查指南 (Troubleshooting)
 
+> 版本: v1.1 | 更新时间: 2026-03-01 18:28:00
+
 本文档记录了基于 OpenClaw Plugin 架构开发和安装本插件（`volcengine-asr`）时，可能会遇到的由 CLI 验证机制引入的一些典型错误及其解决方案。
 
 ## 历史排查记录：Plugin 注册及配置校验失败
@@ -16,14 +18,15 @@
 新版 OpenClaw CLI 在加载本地插件源码时，会强制读取项目根目录的 `package.json`。如果没有找到 `openclaw.extensions` 声明，或者该声明不是一个 **Array（数组）** 格式，解析器就会抛错退出。
 
 **解决方案：**
-在 `package.json` 追加符合格式要求的注册映射，指明插件本身的 Manifest 配置所在。需确保它的值是**字符串数组**。
+在 `package.json` 追加符合格式要求的注册映射，指向插件的**代码入口文件**（非 manifest）。需确保它的值是**字符串数组**。
 ```json
   "openclaw": {
     "extensions": [
-      "./openclaw.plugin.json"
+      "./index.js"
     ]
   }
 ```
+> **注意：** `extensions` 数组中的每个条目应指向代码入口文件（如 `./index.js`），OpenClaw 会自动在同级目录查找 `openclaw.plugin.json` manifest。不要将 manifest 文件本身放进此数组，否则会导致后续的 "plugin not found" 错误（见第 4 条）。
 
 ---
 
@@ -81,6 +84,82 @@
 
 ---
 
+### 4. `plugin not found: volcengine-asr (stale config entry ignored)`
+
+**错误现象：**
+安装成功后，Gateway 启动或执行 `openclaw plugins list` 时反复出现：
+```text
+Config warnings:
+- plugins.entries.volcengine-asr: plugin not found: volcengine-asr
+  (stale config entry ignored; remove it from plugins config)
+```
+
+**原因分析：**
+`package.json` 中 `openclaw.extensions` 指向了 manifest 文件（`./openclaw.plugin.json`）而非代码入口文件（`./index.js`）。OpenClaw 的插件发现机制期望 `extensions` 数组中的每一项都是**可执行的代码入口**，它会自动在入口文件同级目录查找 `openclaw.plugin.json`。指向 manifest 会导致 OpenClaw 无法解析插件入口点，从而判定 "plugin not found"。
+
+**解决方案：**
+将 `package.json` 中的 `openclaw.extensions` 修改为指向代码入口：
+```diff
+  "openclaw": {
+    "extensions": [
+-     "./openclaw.plugin.json"
++     "./index.js"
+    ]
+  }
+```
+修改后需重新执行 `openclaw plugins install` 并重启 Gateway。
+
+---
+
+### 5. `volcengine-asr missing register/activate export`
+
+**错误现象：**
+解决 "plugin not found" 后，`openclaw plugins list` 显示插件状态为 `error`，日志提示：
+```text
+[plugins] volcengine-asr missing register/activate export
+```
+
+**原因分析：**
+OpenClaw 的插件加载器不使用默认导出（`export default` 或 `module.exports = function`），而是查找名为 `register`（或 `activate`）的**命名导出**。如果入口文件使用了 `export default function(api)` 或 `module.exports = function(api)` 这样的匿名/默认导出，OpenClaw 将无法识别到注册函数。
+
+**解决方案：**
+将入口文件（`index.js`）的导出方式改为命名导出：
+```diff
+- export default function (api) {
++ exports.register = function (api) {
+```
+> 本项目使用 CommonJS (`require`) 风格，因此采用 `exports.register` 而非 ESM 的 `export function register`。与项目中其他模块（`volcengine.js`、`s3-client.js`）的导出风格保持一致。
+
+---
+
+### 6. 配置 Key 名称不匹配导致功能异常
+
+**错误现象：**
+插件安装成功、状态正常，但发送语音后没有任何响应，日志中出现 S3 配置不完整的报错。
+
+**原因分析：**
+`~/.openclaw/openclaw.json` 中配置的 Key 名称与代码中实际读取的不一致。常见的错误配对：
+
+| 错误写法 | 正确写法 |
+|---------|--------|
+| `S3_ACCESS_KEY` | `S3_ACCESS_KEY_ID` |
+| `S3_SECRET_KEY` | `S3_SECRET_ACCESS_KEY` |
+
+**解决方案：**
+确保配置文件中的 Key 名称与下表完全一致：
+```json
+"config": {
+  "VOLC_API_KEY": "你的火山引擎 API Key",
+  "S3_ENDPOINT": "你的 S3 兼容存储端点",
+  "S3_ACCESS_KEY_ID": "你的 Access Key ID",
+  "S3_SECRET_ACCESS_KEY": "你的 Secret Access Key",
+  "S3_BUCKET": "volcengine-asr",
+  "S3_REGION": "auto"
+}
+```
+
+---
+
 ## 解决“Config invalid”循环锁定的步骤
 
 一旦遇到以上任意由于验证不通过而留下的残留数据，OpenClaw 会将 `~/.openclaw/openclaw.json` 判定为受损状态并阻止后续的所有 CLI 操作。
@@ -103,3 +182,12 @@
    ```bash
    openclaw gateway restart
    ```
+
+---
+
+## 变更历史
+
+| 版本 | 时间 | 变更内容 |
+|------|------|----------|
+| v1.0 | 2026-03-01 09:50:00 | 初始文档，记录 manifest/configSchema/env 三类校验错误 |
+| v1.1 | 2026-03-01 18:28:00 | 新增第 4-6 条：extensions 指向错误、register 导出缺失、配置 Key 名称不匹配 |
