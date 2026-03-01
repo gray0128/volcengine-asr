@@ -107,7 +107,7 @@ node test.js all
 
 ### 测试流程
 
-1. **加载配置** - 从 `.env` 文件读取环境变量（火山引擎 API Key、S3 存储凭证等）
+1. **加载配置** - 程序自动从 `~/.openclaw/openclaw.json` 读取环境变量（火山引擎 API Key、S3 存储凭证等）
 2. **读取音频** - 读取指定的本地 OGG 文件
 3. **推断格式** - 根据文件扩展名自动推断音频编码参数（format、codec 等）
 4. **上传 S3** - 将音频文件上传到 S3 兼容存储，获取临时预签名 URL
@@ -132,7 +132,6 @@ node test.js all
 │   ├── audio-formats.md      # 音频格式参考
 │   └── api-reference.md      # API 接口参考
 ├── install.sh                 # 一键安装/更新脚本
-├── .env.example              # 环境变量模板
 ├── SKILL.md                  # OpenClaw Skill 元数据
 └── SYSTEMD_SETUP.txt         # systemd 部署指南
 ```

@@ -11,28 +11,28 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// 从 .env 加载环境变量
-function loadEnv() {
+const os = require('os');
+
+// 从 openclaw.json 加载环境变量
+function loadConfig() {
     try {
-        const envRaw = require('fs').readFileSync(path.join(__dirname, '.env'), 'utf-8');
+        const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+        const envRaw = require('fs').readFileSync(configPath, 'utf-8');
         const envContent = JSON.parse(envRaw);
         const skillEnv =
             envContent?.skills?.entries?.['volcengine-asr']?.env ||
             envContent?.skills?.entries?.['doubao-asr']?.env;
         if (skillEnv) {
-            for (const [key, value] of Object.entries(skillEnv)) {
-                if (!process.env[key]) {
-                    process.env[key] = value;
-                }
-            }
-            console.log('[测试] 已从 .env 加载环境变量');
+            console.log('[测试] 已从 openclaw.json 加载环境配置');
+            return skillEnv;
         }
     } catch (e) {
-        console.warn('[测试] 无法加载 .env，将使用系统环境变量');
+        console.warn(`[测试] 无法加载配置: ${e.message}`);
     }
+    return {};
 }
 
-loadEnv();
+const skillConfig = loadConfig();
 
 const { submitTask, waitForResult } = require('./scripts/volcengine');
 const { uploadWithAutoCleanup } = require('./scripts/s3-client');
@@ -81,7 +81,7 @@ async function testFile(filePath) {
     // 3. 上传到 R2
     console.log('\n[3/4] 上传到 R2...');
     const startUpload = Date.now();
-    const r2Result = await uploadWithAutoCleanup(fileBuffer, audioFormat.mime, audioFormat.ext);
+    const r2Result = await uploadWithAutoCleanup(fileBuffer, audioFormat.mime, audioFormat.ext, skillConfig);
     const uploadTime = ((Date.now() - startUpload) / 1000).toFixed(2);
     console.log(`  R2 URL: ${r2Result.url.substring(0, 80)}...`);
     console.log(`  上传耗时: ${uploadTime}s`);
@@ -94,11 +94,11 @@ async function testFile(filePath) {
         codec: audioFormat.codec,
         rate: 16000,
         channel: 1,
-    });
+    }, skillConfig);
     console.log(`  任务 ID: ${requestId}`);
     console.log('  等待识别结果...');
 
-    const transcriptText = await waitForResult(requestId);
+    const transcriptText = await waitForResult(requestId, skillConfig);
     const asrTime = ((Date.now() - startASR) / 1000).toFixed(2);
 
     console.log(`\n  识别耗时: ${asrTime}s`);

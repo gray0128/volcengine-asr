@@ -92,13 +92,10 @@ OpenClaw 大模型处理
 | `S3_REGION` | ❌ | S3 区域，默认 `auto` |
 | `S3_PUBLIC_URL` | ❌ | S3 自定义公开域名，不设置则使用预签名 URL |
 
-### 配置加载优先级
+### 配置统一入口
 
-插件启动时按以下顺序加载配置（已有的系统环境变量不会被覆盖）：
-
-1. 系统环境变量 (`process.env`)
-2. `~/.openclaw/openclaw.json` → `skills.entries.volcengine-asr.env`
-3. 项目目录下的 `.env` 文件
+插件运行时**有且仅有**直接读取系统 `~/.openclaw/openclaw.json` 中的 `skills.entries.volcengine-asr.env` 配置。  
+不在依赖任何项目环境内的 `.env` 文件，也不会污染 `process.env`，确保无缝接入 OpenClaw 标准。
 
 ## Resources
 

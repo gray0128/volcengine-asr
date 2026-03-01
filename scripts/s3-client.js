@@ -7,15 +7,14 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } = re
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 
-const BUCKET_NAME = process.env.S3_BUCKET || 'volcengine-asr';
 const PRESIGN_EXPIRES = 600; // 预签名 URL 有效期 10 分钟
 const CLEANUP_MS = 15 * 60 * 1000; // 15 分钟后清理文件
 
-function getS3Client() {
-    const endpoint = process.env.S3_ENDPOINT;
-    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
-    const region = process.env.S3_REGION || 'auto';
+function getS3Client(skillConfig) {
+    const endpoint = skillConfig?.S3_ENDPOINT;
+    const accessKeyId = skillConfig?.S3_ACCESS_KEY_ID;
+    const secretAccessKey = skillConfig?.S3_SECRET_ACCESS_KEY;
+    const region = skillConfig?.S3_REGION || 'auto';
 
     if (!endpoint || !accessKeyId || !secretAccessKey) {
         throw new Error('S3 配置不完整，需要 S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY');
@@ -39,13 +38,14 @@ function getS3Client() {
  * @param {string} [ext] - 文件扩展名
  * @returns {Promise<{key: string, url: string}>}
  */
-async function uploadAudio(fileBuffer, contentType, ext = '.ogg') {
-    const client = getS3Client();
+async function uploadAudio(fileBuffer, contentType, ext = '.ogg', skillConfig = {}) {
+    const client = getS3Client(skillConfig);
     const key = `audio/${crypto.randomUUID()}${ext}`;
+    const bucketName = skillConfig?.S3_BUCKET || 'volcengine-asr';
 
     // 上传文件
     await client.send(new PutObjectCommand({
-        Bucket: BUCKET_NAME,
+        Bucket: bucketName,
         Key: key,
         Body: fileBuffer,
         ContentType: contentType,
@@ -53,14 +53,14 @@ async function uploadAudio(fileBuffer, contentType, ext = '.ogg') {
 
     // 生成访问 URL
     let url;
-    const publicBase = process.env.S3_PUBLIC_URL;
+    const publicBase = skillConfig?.S3_PUBLIC_URL;
     if (publicBase) {
         // 自定义域名（公开访问），无需签名
         url = `${publicBase}/${key}`;
     } else {
         // 无自定义域名，使用预签名 URL（临时公开访问）
         url = await getSignedUrl(client, new GetObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: bucketName,
             Key: key,
         }), { expiresIn: PRESIGN_EXPIRES });
     }
@@ -72,11 +72,12 @@ async function uploadAudio(fileBuffer, contentType, ext = '.ogg') {
 /**
  * 删除 S3 上的文件
  */
-async function deleteAudio(key) {
+async function deleteAudio(key, skillConfig = {}) {
     try {
-        const client = getS3Client();
+        const client = getS3Client(skillConfig);
+        const bucketName = skillConfig?.S3_BUCKET || 'volcengine-asr';
         await client.send(new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
+            Bucket: bucketName,
             Key: key,
         }));
         console.log(`[S3] 已清理: ${key}`);
@@ -88,12 +89,12 @@ async function deleteAudio(key) {
 /**
  * 上传并设置自动清理
  */
-async function uploadWithAutoCleanup(fileBuffer, contentType, ext = '.ogg') {
-    const result = await uploadAudio(fileBuffer, contentType, ext);
+async function uploadWithAutoCleanup(fileBuffer, contentType, ext = '.ogg', skillConfig = {}) {
+    const result = await uploadAudio(fileBuffer, contentType, ext, skillConfig);
 
     // 异步定时清理
     setTimeout(() => {
-        deleteAudio(result.key).catch(() => { });
+        deleteAudio(result.key, skillConfig).catch(() => { });
     }, CLEANUP_MS);
 
     return result;

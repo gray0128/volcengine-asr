@@ -10,40 +10,33 @@ const os = require('os');
 const { submitTask, waitForResult } = require('./scripts/volcengine');
 const { uploadWithAutoCleanup } = require('./scripts/s3-client');
 
-/**
- * 从 openclaw.json 加载 skill 环境变量（不覆盖已有的系统环境变量）
- */
-function loadSkillEnv() {
-  const configPaths = [
-    path.join(os.homedir(), '.openclaw', 'openclaw.json'),
-    path.join(__dirname, '.env'),
-  ];
+let skillConfig = {};
 
-  for (const configPath of configPaths) {
-    try {
-      const raw = fsSync.readFileSync(configPath, 'utf-8');
-      const config = JSON.parse(raw);
-      const skillEnv =
-        config?.skills?.entries?.['volcengine-asr']?.env;
-      if (skillEnv && typeof skillEnv === 'object') {
-        for (const [key, value] of Object.entries(skillEnv)) {
-          if (!process.env[key]) {
-            process.env[key] = value;
-          }
-        }
-        console.log(`[Volcengine-ASR] 已从 ${path.basename(configPath)} 加载配置`);
-        return;
-      }
-    } catch {
-      // 文件不存在或解析失败，尝试下一个
+/**
+ * 从 openclaw.json 加载 skill 配置
+ */
+function loadSkillConfig() {
+  const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
+  try {
+    const raw = fsSync.readFileSync(configPath, 'utf-8');
+    const config = JSON.parse(raw);
+    const env = config?.skills?.entries?.['volcengine-asr']?.env;
+    if (env && typeof env === 'object') {
+      skillConfig = env;
+      console.log(`[Volcengine-ASR] 已从 openclaw.json 加载配置`);
+    } else {
+      console.warn(`[Volcengine-ASR] openclaw.json 中未找到 volcengine-asr 的 env 配置`);
     }
+  } catch (err) {
+    console.error(`[Volcengine-ASR] 读取配置文件失败 ${configPath}:`, err.message);
   }
 }
 
-loadSkillEnv();
+// 初始化加载配置
+loadSkillConfig();
 
 function isConfigured() {
-  return !!process.env.VOLC_API_KEY;
+  return !!skillConfig.VOLC_API_KEY;
 }
 
 /**
@@ -134,7 +127,7 @@ module.exports = {
               // 本地文件 → 上传到 S3 → 获取公开 URL
               console.log(`[Volcengine-ASR] 本地文件，上传到 S3: ${audioMedia.path}`);
               const fileBuffer = await fs.readFile(audioMedia.path);
-              const r2Result = await uploadWithAutoCleanup(fileBuffer, audioFormat.mime, audioFormat.ext);
+              const r2Result = await uploadWithAutoCleanup(fileBuffer, audioFormat.mime, audioFormat.ext, skillConfig);
               audioUrl = r2Result.url;
               console.log(`[Volcengine-ASR] S3 URL: ${audioUrl}`);
             }
@@ -151,11 +144,11 @@ module.exports = {
           codec: audioFormat.codec,
           rate: 16000,
           channel: 1,
-        });
+        }, skillConfig);
         console.log(`[Volcengine-ASR] 任务已提交: ${requestId}`);
 
         // 等待并获取结果
-        const transcriptText = await waitForResult(requestId);
+        const transcriptText = await waitForResult(requestId, skillConfig);
         console.log(`[Volcengine-ASR] 识别结果: ${transcriptText}`);
 
         // 注入上下文

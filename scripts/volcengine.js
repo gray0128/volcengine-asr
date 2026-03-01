@@ -15,10 +15,10 @@ const QUERY_PATH = '/api/v3/auc/bigmodel/query';
 // volc.bigasr.auc = 1.0 模型, volc.seedasr.auc = 2.0 模型
 const DEFAULT_RESOURCE_ID = 'volc.seedasr.auc';
 
-function getConfig() {
+function getConfig(skillConfig) {
   return {
-    apiKey: process.env.VOLC_API_KEY,
-    resourceId: process.env.VOLC_RESOURCE_ID || DEFAULT_RESOURCE_ID,
+    apiKey: skillConfig?.VOLC_API_KEY,
+    resourceId: skillConfig?.VOLC_RESOURCE_ID || DEFAULT_RESOURCE_ID,
   };
 }
 
@@ -42,10 +42,10 @@ function buildHeaders(config, requestId) {
  * @param {object} options - 音频参数配置
  * @returns {string} requestId - 用于后续查询的任务 ID
  */
-async function submitTask(audioUrl, options = {}) {
-  const config = getConfig();
+async function submitTask(audioUrl, options = {}, skillConfig = {}) {
+  const config = getConfig(skillConfig);
   if (!config.apiKey) {
-    throw new Error('VOLC_API_KEY 环境变量未设置');
+    throw new Error('VOLC_API_KEY 未配置');
   }
 
   const requestId = crypto.randomUUID();
@@ -93,8 +93,8 @@ async function submitTask(audioUrl, options = {}) {
 /**
  * 查询识别结果
  */
-async function queryResult(requestId) {
-  const config = getConfig();
+async function queryResult(requestId, skillConfig = {}) {
+  const config = getConfig(skillConfig);
   const headers = buildHeaders(config, requestId);
 
   const url = `${HOST}${QUERY_PATH}`;
@@ -116,9 +116,9 @@ async function queryResult(requestId) {
  * - 20000002: 队列中
  * - 20000003: 静音音频
  */
-async function waitForResult(requestId, maxRetries = 30, intervalMs = 2000) {
+async function waitForResult(requestId, skillConfig = {}, maxRetries = 30, intervalMs = 2000) {
   for (let i = 0; i < maxRetries; i++) {
-    const result = await queryResult(requestId);
+    const result = await queryResult(requestId, skillConfig);
 
     if (result.statusCode === '20000000') {
       if (result.body && result.body.result) {
