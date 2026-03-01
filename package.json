@@ -11,5 +11,10 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "openclaw": {
+    "extensions": {
+      "plugins": "./openclaw.plugin.json"
+    }
   }
 }
