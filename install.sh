@@ -61,10 +61,10 @@ prompt_input() {
     fi
 
     if [ "$is_secret" = "true" ]; then
-        read -rs input_value
+        read -rs input_value < /dev/tty
         echo ""
     else
-        read -r input_value
+        read -r input_value < /dev/tty
     fi
 
     if [ -z "$input_value" ] && [ -n "$default" ]; then
@@ -84,7 +84,7 @@ prompt_yes_no() {
         echo -ne "  ${prompt} ${DIM}[y/N]${NC}: "
     fi
 
-    read -r answer
+    read -r answer < /dev/tty
     answer="${answer:-$default}"
 
     case "$answer" in
