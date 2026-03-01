@@ -31,11 +31,22 @@ Skill 拦截 (beforeMessageProcessed)
 
 推荐参数：16000 Hz 采样率，单声道，16 bit，音频时长 ≤ 60s。
 
-## 快速开始
-
-### 1. 安装依赖
+## 一键安装
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/gray0128/volcengine-asr/main/install.sh | bash
+```
+
+安装脚本会自动引导你完成配置，也可选择跳过配置，安装后手动添加。
+
+## 手动安装
+
+### 1. 克隆并安装依赖
+
+```bash
+cd ~/.openclaw/skills
+git clone https://github.com/gray0128/volcengine-asr.git doubao-asr
+cd doubao-asr
 npm install
 ```
 
