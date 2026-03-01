@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================================================
-# Volcengine ASR Skill 安装脚本
+# Volcengine ASR Plugin 安装脚本
 # 使用方式: curl -fsSL <URL>/install.sh | bash
 # =============================================================================
 
@@ -25,8 +25,8 @@ WARN="${YELLOW}[!]${NC}"
 # 默认配置
 REPO_URL="https://github.com/gray0128/volcengine-asr.git"
 OPENCLAW_DIR="${OPENCLAW_DIR:-$HOME/.openclaw}"
-SKILL_NAME="volcengine-asr"
-SKILL_DIR=""
+PLUGIN_NAME="volcengine-asr"
+PLUGIN_DIR=""
 CONFIG_FILE=""
 
 # -----------------------------------------------------------------------------
@@ -157,16 +157,16 @@ detect_install_path() {
         fi
     fi
 
-    SKILL_DIR="${OPENCLAW_DIR}/skills/${SKILL_NAME}"
+    PLUGIN_DIR="${OPENCLAW_DIR}/plugins-source/${PLUGIN_NAME}"
     CONFIG_FILE="${OPENCLAW_DIR}/openclaw.json"
 
-    echo -e "  ${INFO} Skill 安装目录: ${SKILL_DIR}"
+    echo -e "  ${INFO} Plugin 安装目录: ${PLUGIN_DIR}"
     echo -e "  ${INFO} 配置文件路径: ${CONFIG_FILE}"
 
     # 检查是否已安装
     UPDATE_MODE=false
-    if [ -d "$SKILL_DIR" ]; then
-        echo -e "\n  ${INFO} Skill 已安装: ${SKILL_DIR}"
+    if [ -d "$PLUGIN_DIR" ]; then
+        echo -e "\n  ${INFO} Plugin 已安装: ${PLUGIN_DIR}"
         echo -e "  ${BOLD}请选择操作:${NC}"
         echo -e "    1) 更新 (git pull + npm install)"
         echo -e "    2) 覆盖安装 (删除后重新克隆)"
@@ -179,7 +179,7 @@ detect_install_path() {
                 echo -e "  ${INFO} 将执行更新..."
                 ;;
             2)
-                rm -rf "$SKILL_DIR"
+                rm -rf "$PLUGIN_DIR"
                 echo -e "  ${INFO} 已删除旧版本，将重新安装..."
                 ;;
             *)
@@ -200,9 +200,9 @@ collect_config() {
         return
     fi
 
-    print_step 3 "配置 Skill 参数"
+    print_step 3 "配置 Plugin 参数"
 
-    echo -e "  ${INFO} 安装此 Skill 需要以下配置:"
+    echo -e "  ${INFO} 安装此 Plugin 需要以下配置:"
     echo ""
     echo -e "  ${BOLD}必需参数:${NC}"
     echo -e "    - VOLC_API_KEY        火山引擎 API Key (UUID 格式)"
@@ -257,12 +257,12 @@ collect_config() {
 # 步骤 4: 下载并安装
 # -----------------------------------------------------------------------------
 
-install_skill() {
+install_plugin() {
     if [ "$UPDATE_MODE" = true ]; then
-        print_step 4 "更新 Skill"
+        print_step 4 "更新 Plugin"
 
         echo -e "  正在拉取最新代码..."
-        cd "$SKILL_DIR"
+        cd "$PLUGIN_DIR"
         git pull 2>&1 | while read -r line; do
             echo -e "  ${DIM}${line}${NC}"
         done
@@ -274,21 +274,31 @@ install_skill() {
         done
         echo -e "  $CHECK 依赖更新完成"
     else
-        print_step 4 "下载并安装 Skill"
+        print_step 4 "下载并安装 Plugin"
 
         echo -e "  正在克隆仓库..."
-        mkdir -p "$(dirname "$SKILL_DIR")"
-        git clone --depth 1 "$REPO_URL" "$SKILL_DIR" 2>&1 | while read -r line; do
+        mkdir -p "$(dirname "$PLUGIN_DIR")"
+        git clone --depth 1 "$REPO_URL" "$PLUGIN_DIR" 2>&1 | while read -r line; do
             echo -e "  ${DIM}${line}${NC}"
         done
         echo -e "  $CHECK 仓库克隆完成"
 
         echo -e "  正在安装依赖..."
-        cd "$SKILL_DIR"
+        cd "$PLUGIN_DIR"
         npm install --production 2>&1 | tail -1 | while read -r line; do
             echo -e "  ${DIM}${line}${NC}"
         done
-        echo -e "  $CHECK 依赖安装完成"
+                echo -e "  $CHECK 依赖安装完成"
+
+        echo -e "  正在注册 Plugin..."
+        if command -v openclaw &> /dev/null; then
+            openclaw plugins install "$PLUGIN_DIR" 2>&1 | while read -r line; do
+                echo -e "  \${DIM}\${line}\${NC}"
+            done
+            echo -e "  $CHECK Plugin 注册完成"
+        else
+            echo -e "  $WARN 未检测到 openclaw 命令，请稍后手动执行: openclaw plugins install $PLUGIN_DIR"
+        fi
     fi
 }
 
@@ -332,7 +342,7 @@ write_config() {
     env_json+="}"
 
     # 构建 skill 配置片段
-    local skill_json="{\"enabled\":true,\"env\":${env_json}}"
+    local plugin_json="{\"enabled\":true,\"env\":${env_json}}"
 
     if [ -f "$CONFIG_FILE" ]; then
         echo -e "  ${INFO} 检测到已有配置文件: ${CONFIG_FILE}"
@@ -340,9 +350,9 @@ write_config() {
         node -e "
 const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('${CONFIG_FILE}', 'utf8'));
-if (!config.skills) config.skills = {};
-if (!config.skills.entries) config.skills.entries = {};
-config.skills.entries['${SKILL_NAME}'] = ${skill_json};
+if (!config.plugins) config.plugins = {};
+if (!config.plugins.entries) config.plugins.entries = {};
+config.plugins.entries['${PLUGIN_NAME}'] = ${plugin_json};
 fs.writeFileSync('${CONFIG_FILE}', JSON.stringify(config, null, 2) + '\n');
 console.log('  配置已合并写入');
 "
@@ -350,7 +360,7 @@ console.log('  配置已合并写入');
         echo -e "  ${INFO} 创建新配置文件: ${CONFIG_FILE}"
         node -e "
 const fs = require('fs');
-const config = { skills: { entries: { '${SKILL_NAME}': ${skill_json} } } };
+const config = { plugins: { entries: { '${PLUGIN_NAME}': ${plugin_json} } } };
 fs.writeFileSync('${CONFIG_FILE}', JSON.stringify(config, null, 2) + '\n');
 console.log('  配置已写入');
 "
@@ -481,7 +491,7 @@ print_success() {
     echo "  ║           安装完成!                      ║"
     echo "  ╚══════════════════════════════════════════╝"
     echo -e "${NC}"
-    echo -e "  ${INFO} Skill 路径: ${CYAN}${SKILL_DIR}${NC}"
+    echo -e "  ${INFO} Plugin 路径: ${CYAN}${PLUGIN_DIR}${NC}"
     echo -e "  ${INFO} 配置文件:   ${CYAN}${CONFIG_FILE}${NC}"
     echo ""
     echo -e "  ${BOLD}下一步:${NC}"
@@ -513,7 +523,7 @@ main() {
     check_prerequisites
     detect_install_path
     collect_config
-    install_skill
+    install_plugin
     write_config
     restart_gateway
     print_success

@@ -1,0 +1,6 @@
+{
+    "$schema": "https://docs.openclaw.ai/schemas/plugin.json",
+    "id": "volcengine-asr",
+    "name": "Volcengine ASR",
+    "description": "拦截语音消息并通过火山引擎 Seed-ASR 转写为文本。"
+}
