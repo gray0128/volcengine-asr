@@ -164,14 +164,29 @@ detect_install_path() {
     echo -e "  ${INFO} 配置文件路径: ${CONFIG_FILE}"
 
     # 检查是否已安装
+    UPDATE_MODE=false
     if [ -d "$SKILL_DIR" ]; then
-        echo -e "\n  $WARN Skill 目录已存在: ${SKILL_DIR}"
-        if prompt_yes_no "是否覆盖安装?" "n"; then
-            rm -rf "$SKILL_DIR"
-        else
-            echo -e "  安装已取消"
-            exit 0
-        fi
+        echo -e "\n  ${INFO} Skill 已安装: ${SKILL_DIR}"
+        echo -e "  ${BOLD}请选择操作:${NC}"
+        echo -e "    1) 更新 (git pull + npm install)"
+        echo -e "    2) 覆盖安装 (删除后重新克隆)"
+        echo -e "    3) 取消"
+        prompt_input "请选择" UPDATE_CHOICE "1"
+
+        case "$UPDATE_CHOICE" in
+            1)
+                UPDATE_MODE=true
+                echo -e "  ${INFO} 将执行更新..."
+                ;;
+            2)
+                rm -rf "$SKILL_DIR"
+                echo -e "  ${INFO} 已删除旧版本，将重新安装..."
+                ;;
+            *)
+                echo -e "  安装已取消"
+                exit 0
+                ;;
+        esac
     fi
 }
 
@@ -180,6 +195,11 @@ detect_install_path() {
 # -----------------------------------------------------------------------------
 
 collect_config() {
+    if [ "$UPDATE_MODE" = true ]; then
+        SKIP_CONFIG=true
+        return
+    fi
+
     print_step 3 "配置 Skill 参数"
 
     echo -e "  ${INFO} 安装此 Skill 需要以下配置:"
@@ -238,21 +258,38 @@ collect_config() {
 # -----------------------------------------------------------------------------
 
 install_skill() {
-    print_step 4 "下载并安装 Skill"
+    if [ "$UPDATE_MODE" = true ]; then
+        print_step 4 "更新 Skill"
 
-    echo -e "  正在克隆仓库..."
-    mkdir -p "$(dirname "$SKILL_DIR")"
-    git clone --depth 1 "$REPO_URL" "$SKILL_DIR" 2>&1 | while read -r line; do
-        echo -e "  ${DIM}${line}${NC}"
-    done
-    echo -e "  $CHECK 仓库克隆完成"
+        echo -e "  正在拉取最新代码..."
+        cd "$SKILL_DIR"
+        git pull 2>&1 | while read -r line; do
+            echo -e "  ${DIM}${line}${NC}"
+        done
+        echo -e "  $CHECK 代码更新完成"
 
-    echo -e "  正在安装依赖..."
-    cd "$SKILL_DIR"
-    npm install --production 2>&1 | tail -1 | while read -r line; do
-        echo -e "  ${DIM}${line}${NC}"
-    done
-    echo -e "  $CHECK 依赖安装完成"
+        echo -e "  正在更新依赖..."
+        npm install --production 2>&1 | tail -1 | while read -r line; do
+            echo -e "  ${DIM}${line}${NC}"
+        done
+        echo -e "  $CHECK 依赖更新完成"
+    else
+        print_step 4 "下载并安装 Skill"
+
+        echo -e "  正在克隆仓库..."
+        mkdir -p "$(dirname "$SKILL_DIR")"
+        git clone --depth 1 "$REPO_URL" "$SKILL_DIR" 2>&1 | while read -r line; do
+            echo -e "  ${DIM}${line}${NC}"
+        done
+        echo -e "  $CHECK 仓库克隆完成"
+
+        echo -e "  正在安装依赖..."
+        cd "$SKILL_DIR"
+        npm install --production 2>&1 | tail -1 | while read -r line; do
+            echo -e "  ${DIM}${line}${NC}"
+        done
+        echo -e "  $CHECK 依赖安装完成"
+    fi
 }
 
 # -----------------------------------------------------------------------------
