@@ -1,143 +1,41 @@
 ---
 name: volcengine-asr
-description: 使用火山引擎 Seed-ASR 2.0（豆包录音文件识别模型）识别语音消息。在消息进入大模型前拦截语音并转写为文本，对下游透明。支持所有平台（飞书、Telegram、钉钉等）的语音消息处理。使用场景：语音转文字、中文语音识别。
+description: |
+  使用火山引擎 Seed-ASR 2.0（豆包录音文件识别模型）拦截各平台发送语音消息，自动识别转写文字，为下游 AI 大模型提供干净纯文本环境。
+  使用此 Skill 可以让大模型在无需多余步骤的情况下直接“听”懂用户的语音指令。
 metadata: { "openclaw": { "requires": { "env": ["VOLC_API_KEY"] } } }
 ---
 
 # Volcengine ASR Skill
 
-## Overview
+## 1. Skill 作用与适用场景
 
-使用火山引擎 Seed-ASR 2.0 Standard（豆包录音文件识别模型2.0-标准版）来识别各平台发送的语音消息。通过 `beforeMessageProcessed` 钩子拦截语音，转写后伪装成普通文本消息，对下游大模型完全透明。支持所有平台（飞书、Telegram、钉钉等），无平台限制。
-## Quick Install / Update
+本技能作为**前置处理器**，主动接管在不同平台（飞书、Telegram、钉钉等）发给开放终端大模型的语音文件（`message.type === 'audio'` 或 `message.media` 含语音）。通过拦截钩子将其提取、转写，然后无缝把上下文替换成普通文本消息供大模型直接回答。
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/gray0128/volcengine-asr/main/install.sh | bash
-```
+这对作为 AI 助理的你而言，它彻底屏蔽了处理上游“音频格式处理”、“API对接”与“格式降级”的麻烦。
 
-首次运行为安装，已安装时自动检测并提供更新选项。
-## Quick Start
+## 2. Agent 使用指引 (How it affects you)
 
-### 1. 配置环境变量
+你（大模型助理）**无需主动使用任何 Tool 来调用此 Skill**。此 Skill 已经自动挂载为全局拦截。
 
-在 `~/.openclaw/openclaw.json` 中配置（插件启动时自动加载）：
+当用户对你发送语音时：
+1. 本 Skill 会在钩子（`beforeMessageProcessed`）层截获它。
+2. 转写结果将会自动填充至用户的 `message.text` 中，并附带元数据 `asr_provider` 通知你。
+3. 当你最终收到用户 Prompt 时，你看到的完全是一句正常由人类“打字键入”的文本。
 
-```json
-{
-  "skills": {
-    "entries": {
-      "volcengine-asr": {
-        "enabled": true,
-        "env": {
-          "VOLC_API_KEY": "你的火山引擎API Key",
-          "S3_ENDPOINT": "你的S3端点URL",
-          "S3_ACCESS_KEY_ID": "你的S3 Access Key ID",
-          "S3_SECRET_ACCESS_KEY": "你的S3 Secret Access Key",
-          "S3_BUCKET": "你的S3 Bucket名称",
-          "S3_REGION": "auto"
-        }
-      }
-    }
-  }
-}
-```
+你需要做的：
+- 当识别成功时：正常解答用户的语音文本诉求即可，就像用户发了普通的文字问题一样。
+- 当识别失败时：你收到的提示词会类似于 `*(系统提示：语音消息解析失败，请尝试文字输入)*`。看到此句时，请你耐心回复并提醒用户遇到了系统识别错误，建议重读或打字沟通。
 
-### 2. 安装依赖
+## 3. Core Capabilities / Audio Spec
 
-```bash
-cd skills/volcengine-asr
-npm install
-```
+支持音频范围：
+- Ogg 容器内的 Opus，这是大部分即时通讯如 Web/飞书/Telegram 的默认语音。
+- 通用 MP3 / M4A / WAV等格式。
+- 时长限制：建议拦截处理在 60s 内的语音对象。
 
-## Core Workflow
+## 4. 依赖项列表 (For Information Only)
 
-```
-平台语音消息（飞书/Telegram/钉钉等）
-    ↓
-[Skill 拦截: beforeMessageProcessed]
-    ↓
-[获取音频: 远程URL直接使用 / 本地文件上传S3]
-    ↓
-[提交火山引擎: submitTask()]
-    ↓
-[轮询结果: waitForResult()]
-    ↓
-[注入上下文: message.type = 'text', message.text = transcript]
-    ↓
-OpenClaw 大模型处理
-```
-
-## Seed-ASR 2.0 音频格式参考
-
-详见 [references/audio-formats.md](references/audio-formats.md)
-
-**关键要点：**
-- ✅ 支持 Opus（封装为 ogg 容器）- 飞书默认格式
-- ✅ 支持 MP3、WAV、PCM
-- 🎯 推荐参数：16000 Hz 采样率，单声道，16 bit
-- ⏱️ 音频时长建议 ≤ 60s
-
-## Configuration
-
-### Environment Variables
-
-| 变量 | 必需 | 说明 |
-|------|------|------|
-| `VOLC_API_KEY` | ✅ | 火山引擎语音服务 API Key（UUID 格式） |
-| `VOLC_RESOURCE_ID` | ❌ | 模型 Resource ID，默认 `volc.seedasr.auc`（2.0） |
-| `S3_ENDPOINT` | ✅ | S3 兼容存储端点 URL |
-| `S3_ACCESS_KEY_ID` | ✅ | S3 Access Key ID |
-| `S3_SECRET_ACCESS_KEY` | ✅ | S3 Secret Access Key |
-| `S3_BUCKET` | ❌ | S3 Bucket 名称，默认 `volcengine-asr` |
-| `S3_REGION` | ❌ | S3 区域，默认 `auto` |
-| `S3_PUBLIC_URL` | ❌ | S3 自定义公开域名，不设置则使用预签名 URL |
-
-### 配置统一入口
-
-插件运行时**有且仅有**直接读取系统 `~/.openclaw/openclaw.json` 中的 `skills.entries.volcengine-asr.env` 配置。  
-不在依赖任何项目环境内的 `.env` 文件，也不会污染 `process.env`，确保无缝接入 OpenClaw 标准。
-
-## Resources
-
-### scripts/
-
-- **volcengine.js** - 火山引擎 Seed-ASR 2.0 API 封装（x-api-key 鉴权、任务提交、结果轮询）
-- **s3-client.js** - S3 兼容对象存储客户端（上传音频、生成预签名 URL、自动清理）
-- **feishu-client.js** - 飞书 API 客户端（可选，用于直接下载飞书文件）
-
-### references/
-
-- **audio-formats.md** - Seed-ASR 2.0 支持的音频格式及参数详细说明
-- **api-reference.md** - 火山引擎和飞书 API 参考文档
-
-## Error Handling
-
-### Graceful Degradation
-
-当语音识别失败时，Skill 会优雅降级：
-
-```javascript
-context.message.text = "*(系统提示：语音消息解析失败，请尝试文字输入)*";
-context.message.type = "text";
-```
-
-### Common Errors
-
-| 错误 | 原因 | 解决方案 |
-|------|------|----------|
-| 未配置 API Key | `VOLC_API_KEY` 未设置 | 检查 `~/.openclaw/openclaw.json` 中的配置 |
-| S3 配置不完整 | S3 环境变量未设置 | 检查 `S3_ENDPOINT`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY` |
-| 音频格式不支持 | 平台语音格式问题 | 安装 ffmpeg 转码，见 [references/audio-formats.md](references/audio-formats.md) |
-| API 调用失败 | 火山引擎鉴权问题 | 检查 API Key 权限和余额 |
-
-## Development
-
-### Testing the Hook
-
-Skill 使用 `beforeMessageProcessed` 钩子，会在每条消息进入大模型前触发。
-
-处理条件：
-- `message.type === 'audio'` 或 `message.media` 中包含音频附件
-- 不限平台，所有平台的语音消息均会处理
-
-其他类型消息原样透传。
+作为运行保障，系统环境（`~/.openclaw/openclaw.json`）已经自动挂载在技能配置中，你无需操心：
+- `VOLC_API_KEY`: 火山引擎服务秘钥。
+- S3 Bucket/Credential 系参数：由于 Seed-ASR API 需要可路由下发的公网大文件 URL，故需经过一层 S3。
